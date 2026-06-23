@@ -1,7 +1,7 @@
 {
-  "name": "CheckItNow 外勤報告",
-  "short_name": "外勤報告",
-  "description": "外勤工程／服務業電子報告與手機簽名系統",
+  "name": "Airlink Service Report",
+  "short_name": "Airlink Report",
+  "description": "Airlink 外勤 Service Report — 填表、簽名、上傳",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

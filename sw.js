@@ -1,8 +1,8 @@
 /**
- * CheckItNow Field Report PWA — Service Worker
+ * Airlink Field Report PWA — Service Worker
  * 快取核心資源，支援離線開啟與「加入主畫面」獨立 App 體驗。
  */
-const CACHE_NAME = 'checkitnow-field-report-v2';
+const CACHE_NAME = 'airlink-field-report-v3';
 const ASSETS = [
   './',
   './index.html',
