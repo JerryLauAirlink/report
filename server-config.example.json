@@ -1,0 +1,5 @@
+{
+  "dropboxAccessToken": "貼上 Dropbox App 嘅 Access Token",
+  "localReportDir": "REPORT",
+  "dropboxUpload": true
+}

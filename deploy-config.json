@@ -1,0 +1,6 @@
+{
+  "configRevision": 2,
+  "webhookUrl": "/upload",
+  "dropboxFolder": "/Taiwan/Service Reports/",
+  "companyName": "Airlink Security Technologies Ltd."
+}

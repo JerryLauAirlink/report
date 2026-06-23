@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1a2332">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="外勤報告">
+  <title>外勤報告 | CheckItNow</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root {
+      --bg:#0f1419; --surface:#1a2332; --surface-2:#243044; --border:#2d3a4f;
+      --text:#e8edf4; --muted:#8b9cb3; --accent:#2563eb; --success:#22c55e; --danger:#ef4444;
+      --radius:10px; --footer-h:44px; --safe-bottom:env(safe-area-inset-bottom,0px);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;line-height:1.5;padding-bottom:calc(var(--footer-h) + var(--safe-bottom) + 16px)}
+    .app-header{background:linear-gradient(180deg,var(--surface),var(--bg));border-bottom:1px solid var(--border);padding:18px 16px 14px;text-align:center}
+    .app-header h1{font-size:1.1rem;font-weight:600}
+    .app-header p{font-size:.75rem;color:var(--muted);margin-top:4px}
+    main{max-width:520px;margin:0 auto;padding:16px;overflow-x:hidden}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;max-width:100%;overflow:hidden}
+    .card-title{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .field{margin-bottom:14px;min-width:0;max-width:100%}
+    #formFields{max-width:100%;min-width:0}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:6px;font-weight:500}
+    input[type=text],input[type=date],input[type=time],input[type=tel],textarea,select{
+      width:100%;max-width:100%;min-width:0;padding:12px 14px;background:var(--bg);border:1px solid var(--border);
+      border-radius:8px;color:var(--text);font-size:16px;outline:none;box-sizing:border-box
+    }
+    input[type=date],input[type=time]{cursor:pointer;display:block;-webkit-appearance:none;appearance:none}
+    input[type=date]::-webkit-date-and-time-value{text-align:left}
+    input[type=date]::-webkit-calendar-picker-indicator,input[type=time]::-webkit-calendar-picker-indicator{
+      cursor:pointer;opacity:1;width:20px;height:20px;margin:0;flex-shrink:0
+    }
+    .date-wrap,.time-wrap{
+      display:flex;align-items:stretch;gap:8px;width:100%;max-width:100%;min-width:0
+    }
+    .date-wrap input[type=date],.time-wrap input[type=time]{
+      flex:1 1 0;min-width:0;width:0;max-width:100%
+    }
+    .date-btn,.time-btn{
+      flex:0 0 auto;padding:0 12px;background:var(--surface-2);border:1px solid var(--border);
+      border-radius:8px;color:var(--text);font-size:1rem;cursor:pointer;line-height:1
+    }
+    .date-btn:active,.time-btn:active{background:var(--border)}
+    input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+    textarea{min-height:88px;resize:vertical;font-family:inherit;line-height:1.45}
+    textarea.rpt-field-lg{min-height:110px}
+    .tpl-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .tpl-tab{padding:12px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);font-size:.72rem;cursor:pointer;text-align:center;line-height:1.35;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    .tpl-tab,.btn-upload,.config-toggle,.btn-clear{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    .tpl-tab.active{border-color:var(--accent);background:rgba(37,99,235,.15);color:#fff}
+    .check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .check-item{display:flex;align-items:flex-start;gap:8px;font-size:.85rem;color:var(--text);padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
+    .check-item input{width:18px;height:18px;margin-top:2px;flex-shrink:0}
+    .check-item span{line-height:1.3}
+    .signature-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;touch-action:none}
+    #signatureCanvas{display:block;width:100%;height:180px}
+    .signature-actions{display:flex;justify-content:flex-end;margin-top:10px}
+    .btn-clear,.btn-secondary,.config-toggle{padding:8px 16px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.82rem;cursor:pointer}
+    .btn-secondary{width:100%;padding:10px;margin-top:4px;border-style:dashed}
+    .preview-wrap{
+      overflow-x:hidden;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:#fff;
+      padding:6px;max-height:min(72vh,720px)
+    }
+    .preview-viewport{overflow:hidden;margin:0 auto}
+    .preview-scale{transform-origin:top left;width:794px}
+    .btn-upload{display:block;width:100%;padding:18px;margin:8px 0 16px;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.35)}
+    .btn-upload:disabled{opacity:.6}
+    .config-toggle{width:100%;padding:10px;margin-bottom:12px;text-align:left}
+    .config-panel{display:none;margin-bottom:16px}
+    .config-panel.open{display:block}
+    .config-hint{font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.5}
+    .upload-target{
+      text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:12px;
+      padding:10px 12px;background:var(--surface);border:1px solid var(--border);
+      border-radius:8px;line-height:1.45
+    }
+    .upload-target strong{color:var(--text);word-break:break-all}
+    .btn-reset-default{
+      width:100%;padding:10px;margin-top:10px;background:var(--bg);border:1px dashed var(--border);
+      border-radius:8px;color:var(--muted);font-size:.82rem;cursor:pointer
+    }
+    .install-hint{display:none;text-align:center;font-size:.75rem;color:var(--muted);margin-bottom:12px;padding:10px;background:var(--surface);border:1px dashed var(--border);border-radius:8px}
+    .install-hint.visible{display:block}
+    .app-footer{position:fixed;bottom:0;left:0;right:0;height:calc(var(--footer-h)+var(--safe-bottom));padding-bottom:var(--safe-bottom);background:#e5e7eb;color:#6b7280;font-size:.68rem;display:flex;align-items:center;justify-content:center;z-index:100;border-top:1px solid #d1d5db}
+    .toast{
+      position:fixed;left:50%;transform:translateX(-50%) translateY(120%);
+      bottom:calc(var(--footer-h) + var(--safe-bottom) + 12px);top:auto;
+      background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+      padding:14px 20px;border-radius:10px;font-size:.88rem;max-width:calc(100% - 32px);
+      text-align:center;z-index:300;transition:transform .35s;box-shadow:0 8px 32px rgba(0,0,0,.45);
+      white-space:pre-line;line-height:1.45
+    }
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .toast.success{border-color:var(--success)} .toast.error{border-color:var(--danger)}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    #companyReportSheet,#companyReportSheetCapture{
+      width:794px;background:#fff;color:#000;
+      font-family:"Times New Roman","Microsoft JhengHei",serif;font-size:10.5px;padding:16px 20px
+    }
+    #companyReportSheetCapture{
+      position:fixed;left:-9999px;top:0;width:794px;pointer-events:none;z-index:-1;
+      opacity:1;visibility:visible;background:#fff;
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+      text-rendering:geometricPrecision;font-size:11px
+    }
+    #companyReportSheetCapture .rpt-tbl td,
+    #companyReportSheetCapture .rpt-tbl th,
+    #companyReportSheetCapture .rpt-val,
+    #companyReportSheetCapture .rpt-st-item,
+    #companyReportSheetCapture .rpt-single{font-size:11px!important;line-height:1.35!important}
+    #companyReportSheetCapture .rpt-legal{font-size:10px}
+    #companyReportSheetCapture .rpt-company{font-size:10px}
+    #companyReportSheetCapture .rpt-company strong{font-size:11px}
+    #companyReportSheetCapture .rpt-sig-box img,
+    .rpt-capture-sig{
+      position:static!important;display:block!important;
+      width:100%!important;height:52px!important;max-width:100%;
+      object-fit:contain!important;object-position:left center;
+      image-rendering:auto
+    }
+    .rpt-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+    .rpt-logo{height:36px;width:auto;object-fit:contain;flex-shrink:0;display:block}
+    .rpt-header-mid{flex:1;text-align:center;min-width:0}
+    .rpt-h1{font-size:16px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#000;line-height:1.2}
+    .rpt-jobno{text-align:right;line-height:1.3;flex-shrink:0;max-width:190px}
+    .rpt-jobno-lbl{font-size:10px;font-weight:700;color:#000;display:block}
+    .rpt-jobno-val{font-size:14px;font-weight:700;color:#000;display:block;margin-top:3px;letter-spacing:.3px}
+    .rpt-section{font-size:10.5px;font-weight:700;color:#333;margin:5px 0 2px;padding-left:4px;border-left:3px solid #333}
+    .rpt-tbl{width:100%;border-collapse:collapse;margin-bottom:3px;table-layout:fixed;color:#000}
+    .rpt-tbl td,.rpt-tbl th{
+      border:1px solid #000;padding:3px 5px;vertical-align:top;color:#000;font-size:10.5px;
+      line-height:1.35;overflow:hidden;word-break:break-word;overflow-wrap:anywhere
+    }
+    .rpt-lbl,.rpt-lbl-sm{
+      font-weight:700;width:22%;background:#f5f5f5;color:#000;font-size:10.5px;
+      white-space:normal;vertical-align:middle
+    }
+    .rpt-val{vertical-align:middle;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;line-height:1.35}
+    .rpt-single{height:18px;max-height:18px;white-space:nowrap;font-size:10.5px!important;line-height:1.35!important}
+    .rpt-date{white-space:nowrap;font-size:10.5px}
+    .rpt-legal{font-size:10px;line-height:1.35;margin:4px 0;text-align:justify;color:#000}
+    .rpt-st-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:10px;row-gap:4px;align-items:center}
+    .rpt-st-item{font-size:10.5px;line-height:1.35;color:#000}
+    .rpt-area-sm{height:26px;max-height:26px}
+    .rpt-area{height:38px;max-height:38px}
+    .rpt-area-lg{height:50px;max-height:50px}
+    .rpt-area-faults{height:72px;max-height:72px;vertical-align:top}
+    .rpt-area-action{height:96px;max-height:96px;vertical-align:top}
+    .rpt-remarks{height:38px;max-height:38px}
+    .rpt-sig-table{table-layout:fixed;width:100%}
+    .rpt-sig-row td{height:52px;max-height:52px;vertical-align:middle;padding:2px 5px}
+    .rpt-sig-cell{width:28%;padding:2px 4px!important;vertical-align:middle}
+    .rpt-sig-box{
+      width:100%;height:52px;min-height:52px;max-height:52px;
+      overflow:hidden;position:relative;background:#fff;line-height:0
+    }
+    .rpt-sig-box img{
+      position:absolute;left:0;top:0;width:100%;height:100%;
+      object-fit:contain;object-position:left center;display:block
+    }
+    .rpt-company{margin-top:8px;text-align:center;font-size:9px;line-height:1.4;color:#000}
+    .rpt-company strong{display:block;font-size:10px}
+    .rpt-dual-hdr td{font-weight:700;background:#f0f0f0;text-align:center;font-size:10.5px;padding:3px}
+    #companyReportSheetCapture .rpt-jobno-val{font-size:15px}
+    #companyReportSheetCapture .rpt-area-faults,
+    #companyReportSheetCapture .rpt-area-action{line-height:1.35!important}
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>外勤報告 · Report Forms</h1>
+    <p>填 Service Report → 客戶簽名 → 上傳 Dropbox</p>
+  </header>
+  <main>
+    <div id="installHint" class="install-hint">📲 加入主畫面後可一鍵開啟、隱藏網址列</div>
+    <div id="uploadTargetBanner" class="upload-target">📁 載入上傳設定中…</div>
+    <button type="button" class="config-toggle" id="configToggle">⚙️ 上傳設定（預設已設好，可按此修改）</button>
+    <div class="config-panel card" id="configPanel">
+      <div class="field"><label>Webhook URL（Make / n8n）</label><input type="text" id="cfgWebhook" placeholder="https://hook.make.com/..."></div>
+      <div class="field"><label>Dropbox 上傳資料夾</label><input type="text" id="cfgDropboxFolder" placeholder="/REPORT/"></div>
+      <div class="field"><label>公司名稱（表頭，可選）</label><input type="text" id="cfgCompanyName" placeholder="Airlink Security Technologies Ltd."></div>
+      <p class="config-hint">同事一般<strong>唔使改</strong>，填表簽名後直接上傳即可。<br>Make 路徑：<code>{{dropboxFolder}}{{filename}}</code><br>本地測試上 Dropbox：編輯 <code>server-config.json</code> 放入 Dropbox Token<br>管理員可改 <code>deploy-config.json</code> 更新全公司預設（改完請加 <code>configRevision</code> 數字）。</p>
+      <button type="button" class="btn-reset-default" id="resetConfigBtn">↩ 恢復公司預設</button>
+    </div>
+
+    <section class="card">
+      <h2 class="card-title">Report Form</h2>
+      <div class="tpl-tabs" id="tplTabs">
+        <button type="button" class="tpl-tab active" data-tpl="tw">🇹🇼 Taiwan<br>Service Report</button>
+        <button type="button" class="tpl-tab" data-tpl="sg">🇸🇬 Singapore<br>Service Report (EN)</button>
+      </div>
+      <p class="config-hint" id="tplHint">對應檔案：Service Report.xlt · service report template.pdf</p>
+    </section>
+
+    <form id="reportForm" novalidate>
+      <section class="card">
+        <h2 class="card-title">Step 1 · 輸入資料（自動對位表格欄位）</h2>
+        <div id="formFields"></div>
+        <p id="bootError" style="display:none;color:#ef4444;font-size:.85rem;margin-top:10px;padding:10px;background:rgba(239,68,68,.1);border-radius:8px"></p>
+      </section>
+      <section class="card">
+        <h2 class="card-title">Step 2 · 表格預覽（所見即 PDF）</h2>
+        <div class="preview-wrap"><div class="preview-viewport" id="previewViewport"><div class="preview-scale" id="previewScale"><div id="companyReportSheet"></div></div></div></div>
+      </section>
+      <section class="card">
+        <h2 class="card-title">Step 3 · 客戶手機簽名</h2>
+        <div class="signature-wrap"><canvas id="signatureCanvas"></canvas></div>
+        <div class="signature-actions"><button type="button" class="btn-clear" id="clearSignatureBtn">清除簽名 Clear</button></div>
+      </section>
+      <button type="button" class="btn-upload" id="uploadBtn">✅ 一鍵上傳報告 / UPLOAD REPORT</button>
+    </form>
+  </main>
+  <footer class="app-footer">Powered by CheckItNow CRM | Support: checkitnow123@gmail.com</footer>
+  <div id="toast" class="toast" role="status"></div>
+  <div id="companyReportSheetCapture"></div>
+
+  <script src="lib/html2canvas.min.js"></script>
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script>
+    const CONFIG_VERSION = 8;
+    const DEFAULT_CONFIG = {
+      webhookUrl: '/upload',
+      dropboxFolder: '/REPORT/',
+      companyName: 'Airlink Security Technologies Ltd.',
+      deployRevision: 0
+    };
+    let deployDefaults = { ...DEFAULT_CONFIG };
+    let config = { ...DEFAULT_CONFIG };
+
+    const SERVICE_TYPES_TW = [
+      { id: 'maintenance', label: 'Maintenance/維護' },
+      { id: 'underWarranty', label: 'Under Warranty/保固期' },
+      { id: 'chargeableEcall', label: 'Chargeable E-call/收款叫修' },
+      { id: 'serviceOthers', label: 'Others/其他' }
+    ];
+    const SERVICE_TYPES_SG = [
+      { id: 'maintenance', label: 'Maintenance' },
+      { id: 'underWarranty', label: 'Under Warranty' },
+      { id: 'chargeableEcall', label: 'Chargeable E-call' },
+      { id: 'serviceOthers', label: 'Others' }
+    ];
+
+    const FOLLOW_UP_SECTIONS_TW = [
+      { id: 'partsReplacement', label: 'Parts Replacement/更換零件' },
+      { id: 'loanEquipment', label: 'Loan Equipment/借用零件' },
+      { id: 'hasQuotation', label: 'Quotation#/報價' },
+      { id: 'hasOthers', label: 'Others/其他' }
+    ];
+    const FOLLOW_UP_SECTIONS_SG = [
+      { id: 'partsReplacement', label: 'Parts Replacement' },
+      { id: 'loanEquipment', label: 'Loan Equipment' },
+      { id: 'hasQuotation', label: 'Quotation' },
+      { id: 'hasOthers', label: 'Others' }
+    ];
+
+    const FORM_SCHEMA_TW = [
+      { id: 'jobNumber', label: 'Job No/項目號', type: 'text', required: true },
+      { id: 'customerName', label: 'Customer/客戶', type: 'text', required: true },
+      { id: 'siteAddress', label: 'Site Address/地址', type: 'text', required: true },
+      { id: 'serviceTypeChecks', label: 'Service Type/服務型態', type: 'checks', items: SERVICE_TYPES_TW, extra: { id: 'serviceTypeOthers', label: 'Others 其他說明', type: 'text' } },
+      { id: 'dateOfCall', label: 'Date of call/日期', type: 'date', required: true },
+      { id: 'startTime', label: 'Start Time/開始時間', type: 'time', required: true },
+      { id: 'requestBy', label: 'Request by/要求者', type: 'text' },
+      { id: 'completionTime', label: 'Completion Time/完成時間', type: 'time' },
+      { id: 'durationHours', label: 'Duration (Hours)/所用時間', type: 'text' },
+      { id: 'faults', label: 'Faults/問題', type: 'textarea', required: true, rows: 4, large: true },
+      { id: 'problem', label: 'Problem/實際問題', type: 'textarea', required: true, rows: 4, large: true },
+      { id: 'actionTaken', label: 'Action Taken/解決方案', type: 'textarea', required: true, rows: 4, large: true },
+      { id: 'followUpRequired', label: 'Follow up required/需要跟進', type: 'radio', options: [{ id: 'yes', label: 'Yes' }, { id: 'no', label: 'No' }] },
+      { id: 'followUpDate', label: 'Follow up Date/跟進日期', type: 'date' },
+      { id: 'followUpAction', label: 'Action/解決方案 (Follow Up)', type: 'textarea', rows: 3, large: true },
+      { id: 'followUpSections', label: 'Follow Up 項目（打勾適用）', type: 'checks', items: FOLLOW_UP_SECTIONS_TW },
+      { id: 'partsModel', label: 'Parts Model #/更換零件型號', type: 'text' },
+      { id: 'partsManufacturer', label: 'Parts Manufacturer/原廠', type: 'text' },
+      { id: 'partsDescription', label: 'Parts Description/明細', type: 'text' },
+      { id: 'partsQty', label: 'Parts Qty', type: 'text' },
+      { id: 'loanModel', label: 'Loan Model #/借用零件型號', type: 'text' },
+      { id: 'loanManufacturer', label: 'Loan Manufacturer', type: 'text' },
+      { id: 'loanDescription', label: 'Loan Description', type: 'text' },
+      { id: 'loanQty', label: 'Loan Qty', type: 'text' },
+      { id: 'quotation', label: 'Quotation#/報價內容', type: 'text' },
+      { id: 'others', label: 'Others/其他', type: 'textarea', rows: 3, large: true },
+      { id: 'engineerName', label: 'Airlink Representative/工程師', type: 'text', required: true },
+      { id: 'customerRepresentative', label: "Customer's Representative/客戶代表", type: 'text' },
+      { id: 'dateCallCompleted', label: 'Date Call Completed/完成日', type: 'date', required: true },
+      { id: 'remarks', label: 'Remarks/備註', type: 'textarea', rows: 3, large: true }
+    ];
+
+    const FORM_SCHEMA_SG = [
+      { id: 'jobNumber', label: 'Your PO No', type: 'text', required: true },
+      { id: 'customerName', label: 'Customer', type: 'text', required: true },
+      { id: 'siteAddress', label: 'Site Address', type: 'text', required: true },
+      { id: 'serviceTypeChecks', label: 'Service Type', type: 'checks', items: SERVICE_TYPES_SG, extra: { id: 'serviceTypeOthers', label: 'Others (specify)', type: 'text' } },
+      { id: 'dateOfCall', label: 'Date of call', type: 'date', required: true },
+      { id: 'startTime', label: 'Start Time', type: 'time', required: true },
+      { id: 'requestBy', label: 'Request by', type: 'text' },
+      { id: 'completionTime', label: 'Completion Time', type: 'time' },
+      { id: 'durationHours', label: 'Duration', type: 'text' },
+      { id: 'faults', label: 'Faults', type: 'textarea', required: true, rows: 5, large: true },
+      { id: 'actionTaken', label: 'Action Taken', type: 'textarea', required: true, rows: 6, large: true },
+      { id: 'followUpRequired', label: 'Is follow up request', type: 'radio', options: [{ id: 'yes', label: 'Yes' }, { id: 'no', label: 'No' }] },
+      { id: 'followUpDate', label: 'Follow up Date', type: 'date' },
+      { id: 'followUpAction', label: 'Action', type: 'textarea', rows: 4, large: true },
+      { id: 'followUpSections', label: 'Follow Up (check if applicable)', type: 'checks', items: FOLLOW_UP_SECTIONS_SG },
+      { id: 'partsModel', label: 'Parts Model #', type: 'text' },
+      { id: 'partsManufacturer', label: 'Parts Manufacturer', type: 'text' },
+      { id: 'partsDescription', label: 'Parts Description', type: 'textarea', rows: 2 },
+      { id: 'partsQty', label: 'Parts Qty', type: 'text' },
+      { id: 'loanModel', label: 'Loan Model #', type: 'text' },
+      { id: 'loanManufacturer', label: 'Loan Manufacturer', type: 'text' },
+      { id: 'loanDescription', label: 'Loan Description', type: 'textarea', rows: 2 },
+      { id: 'loanQty', label: 'Loan Qty', type: 'text' },
+      { id: 'quotation', label: 'Quotation', type: 'textarea', rows: 2 },
+      { id: 'others', label: 'Others', type: 'textarea', rows: 4, large: true },
+      { id: 'engineerName', label: 'Airlink Representative', type: 'text', required: true },
+      { id: 'customerRepresentative', label: "Customer's Representative", type: 'text' },
+      { id: 'dateCallCompleted', label: 'Date Call Completed', type: 'date', required: true },
+      { id: 'remarks', label: 'Remarks', type: 'textarea', rows: 4, large: true }
+    ];
+
+    const TEMPLATE_DEFS = {
+      tw: {
+        id: 'tw',
+        hint: '對應檔案：Service Report.xlt · service report template.pdf',
+        formType: 'serviceReportTW',
+        fileTag: 'ServiceReport_TW'
+      },
+      sg: {
+        id: 'sg',
+        hint: 'Template: Airlink Service Report Template.xls（同 TW 表格版面，英文）',
+        formType: 'serviceReportSG',
+        fileTag: 'ServiceReport_SG'
+      }
+    };
+
+    let activeTemplate = 'tw';
+    const formDrafts = { tw: null, sg: null };
+
+    function getFormSchema() {
+      return activeTemplate === 'sg' ? FORM_SCHEMA_SG : FORM_SCHEMA_TW;
+    }
+    function getTemplateDef() {
+      return TEMPLATE_DEFS[activeTemplate] || TEMPLATE_DEFS.tw;
+    }
+    function getServiceTypeLabels(templateId) {
+      return templateId === 'sg' ? SERVICE_TYPES_SG : SERVICE_TYPES_TW;
+    }
+
+    function saveFormDraft() {
+      formDrafts[activeTemplate] = getFieldValues();
+      try {
+        localStorage.setItem('cin_report_drafts', JSON.stringify(formDrafts));
+        localStorage.setItem('cin_report_template', activeTemplate);
+      } catch { /* ignore */ }
+    }
+
+    function loadStoredDrafts() {
+      try {
+        const tpl = localStorage.getItem('cin_report_template');
+        if (tpl === 'tw' || tpl === 'sg') activeTemplate = tpl;
+        const saved = JSON.parse(localStorage.getItem('cin_report_drafts') || '{}');
+        if (saved.tw) formDrafts.tw = saved.tw;
+        if (saved.sg) formDrafts.sg = saved.sg;
+      } catch { /* ignore */ }
+    }
+
+    function applyFormDraft(draft) {
+      if (!draft) return;
+      formFieldsEl.querySelectorAll('[data-fid]').forEach((el) => {
+        const id = el.dataset.fid;
+        const group = el.dataset.group;
+        if (el.type === 'checkbox') {
+          el.checked = (draft[group] || []).includes(id);
+        } else if (el.type === 'radio') {
+          el.checked = draft[el.name] === el.value;
+        } else if (draft[id] != null) {
+          el.value = draft[id];
+        }
+      });
+      const dur = formFieldsEl.querySelector('[data-fid="durationHours"]');
+      if (dur && draft.durationHours) dur.dataset.manual = '1';
+    }
+
+    function updateTemplateUI() {
+      document.querySelectorAll('#tplTabs .tpl-tab').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tpl === activeTemplate);
+      });
+      const hint = document.getElementById('tplHint');
+      if (hint) hint.textContent = getTemplateDef().hint;
+    }
+
+    function switchTemplate(nextTpl) {
+      if (nextTpl === activeTemplate) return;
+      saveFormDraft();
+      activeTemplate = nextTpl;
+      updateTemplateUI();
+      renderFormFields();
+      applyFormDraft(formDrafts[activeTemplate]);
+      renderReportSheet();
+    }
+
+    function initTemplateTabs() {
+      document.querySelectorAll('#tplTabs .tpl-tab').forEach((btn) => {
+        btn.addEventListener('click', () => switchTemplate(btn.dataset.tpl));
+      });
+      updateTemplateUI();
+    }
+
+    async function loadDeployConfig() {
+      try {
+        const res = await fetch(`deploy-config.json?_=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        deployDefaults = {
+          ...DEFAULT_CONFIG,
+          webhookUrl: data.webhookUrl ?? DEFAULT_CONFIG.webhookUrl,
+          dropboxFolder: data.dropboxFolder ?? DEFAULT_CONFIG.dropboxFolder,
+          companyName: data.companyName ?? DEFAULT_CONFIG.companyName,
+          deployRevision: Number(data.configRevision) || 0
+        };
+      } catch { /* use built-in defaults */ }
+    }
+
+    function getBaseConfig() {
+      return {
+        webhookUrl: deployDefaults.webhookUrl,
+        dropboxFolder: deployDefaults.dropboxFolder,
+        companyName: deployDefaults.companyName,
+        deployRevision: deployDefaults.deployRevision || 0,
+        _version: CONFIG_VERSION
+      };
+    }
+
+    function normalizeFolder(path) {
+      const p = (path || '/REPORT/').trim() || '/REPORT/';
+      return p.endsWith('/') ? p : `${p}/`;
+    }
+
+    function loadConfig() {
+      const base = getBaseConfig();
+      base.dropboxFolder = normalizeFolder(base.dropboxFolder);
+      try {
+        const saved = JSON.parse(localStorage.getItem('cin_report_config') || '{}');
+        const deployRev = base.deployRevision;
+        const savedRev = Number(saved.deployRevision) || 0;
+        if (!saved._version || saved._version !== CONFIG_VERSION || deployRev > savedRev) {
+          localStorage.setItem('cin_report_config', JSON.stringify(base));
+          return { ...base };
+        }
+        const merged = { ...base, ...saved, _version: CONFIG_VERSION };
+        merged.dropboxFolder = normalizeFolder(merged.dropboxFolder);
+        if (merged.webhookUrl.startsWith('/') || /localhost|127\.0\.0\.1/.test(merged.webhookUrl)) {
+          if (/localhost|127\.0\.0\.1/.test(merged.webhookUrl)) merged.webhookUrl = '/upload';
+        }
+        return merged;
+      } catch {
+        return { ...base };
+      }
+    }
+
+    function resetToDeployDefaults() {
+      config = { ...getBaseConfig() };
+      config.dropboxFolder = normalizeFolder(config.dropboxFolder);
+      config._version = CONFIG_VERSION;
+      localStorage.setItem('cin_report_config', JSON.stringify(config));
+      document.getElementById('cfgWebhook').value = config.webhookUrl;
+      document.getElementById('cfgDropboxFolder').value = config.dropboxFolder;
+      document.getElementById('cfgCompanyName').value = config.companyName;
+      updateUploadBanner();
+      renderReportSheet();
+      showToast('已恢復公司預設上傳設定');
+    }
+
+    let serverUploadStatus = null;
+
+    function hasServerDropbox() {
+      return !!(serverUploadStatus && serverUploadStatus.dropboxEnabled);
+    }
+
+    async function fetchUploadStatus() {
+      if (!isLocalTestMode(getUploadUrl())) return;
+      try {
+        const res = await fetch(`${window.location.origin}/upload/status`, { cache: 'no-store' });
+        if (res.ok) serverUploadStatus = await res.json();
+      } catch {
+        serverUploadStatus = null;
+      }
+    }
+
+    function updateUploadBanner() {
+      const el = document.getElementById('uploadTargetBanner');
+      if (!el) return;
+      const folder = config.dropboxFolder || '/REPORT/';
+      const local = isLocalTestMode(getUploadUrl());
+      if (local && hasServerDropbox()) {
+        el.innerHTML = `📁 PDF 上傳至 Dropbox：<strong>${esc(folder)}</strong><br><span style="opacity:.85;font-size:.72rem">經本機 server 直傳 Dropbox 雲端</span>`;
+      } else if (local) {
+        el.innerHTML = `⚠️ <strong>測試模式</strong>：只存電腦 <strong>REPORT/</strong>，<strong>未去 Dropbox</strong><br>請設定 <code>server-config.json</code> 或 Make Webhook`;
+      } else {
+        el.innerHTML = `📁 PDF 上傳至 Dropbox：<strong>${esc(folder)}</strong>`;
+      }
+    }
+    let isDrawing = false, hasSignature = false, lastX = 0, lastY = 0, sigPreviewTimer = null;
+    let cachedSigDataUrl = '';
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    const previewSheet = document.getElementById('companyReportSheet');
+    const captureSheet = document.getElementById('companyReportSheetCapture');
+    const formFieldsEl = document.getElementById('formFields');
+
+    function getUploadUrl() {
+      const raw = (config.webhookUrl || '/upload').trim();
+      if (raw.startsWith('/')) return `${window.location.origin}${raw}`;
+      if (/localhost|127\.0\.0\.1/.test(raw)) return `${window.location.origin}/upload`;
+      return raw;
+    }
+    function isLocalTestMode(url) {
+      if (url.startsWith(window.location.origin)) return true;
+      return /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(url);
+    }
+    function saveConfig() {
+      const base = getBaseConfig();
+      config.webhookUrl = document.getElementById('cfgWebhook').value.trim() || base.webhookUrl;
+      config.dropboxFolder = normalizeFolder(document.getElementById('cfgDropboxFolder').value.trim() || base.dropboxFolder);
+      config.companyName = document.getElementById('cfgCompanyName').value.trim() || base.companyName;
+      config.deployRevision = config.deployRevision ?? base.deployRevision;
+      config._version = CONFIG_VERSION;
+      localStorage.setItem('cin_report_config', JSON.stringify(config));
+      updateUploadBanner();
+    }
+    function todayISO() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function chk(on) { return on ? '☑' : '☐'; }
+
+    function showToast(msg, type='success', ms=4500) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = `toast show ${type}`;
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => t.classList.remove('show'), ms);
+    }
+
+    function getFieldValues() {
+      const v = {};
+      formFieldsEl.querySelectorAll('[data-fid]').forEach((el) => {
+        if (el.type === 'checkbox') {
+          if (!v[el.dataset.group]) v[el.dataset.group] = [];
+          if (el.checked) v[el.dataset.group].push(el.dataset.fid);
+        } else if (el.type === 'radio') {
+          if (el.checked) v[el.name] = el.value;
+        } else {
+          v[el.dataset.fid] = el.value.trim();
+        }
+      });
+      return v;
+    }
+
+    function openPicker(input) {
+      if (!input) return;
+      try {
+        if (typeof input.showPicker === 'function') input.showPicker();
+        else input.focus();
+      } catch {
+        input.focus();
+      }
+    }
+    const openDatePicker = openPicker;
+    const openTimePicker = openPicker;
+
+    function renderFormFields() {
+      const schema = getFormSchema();
+      formFieldsEl.innerHTML = schema.map((f) => {
+        if (f.type === 'checks') {
+          const boxes = f.items.map((it) =>
+            `<label class="check-item"><input type="checkbox" data-fid="${it.id}" data-group="${f.id}"><span>${esc(it.label)}</span></label>`
+          ).join('');
+          const extra = f.extra ? `<div class="field" style="margin-top:10px"><label>${esc(f.extra.label)}</label><input type="text" data-fid="${f.extra.id}"></div>` : '';
+          return `<div class="field"><label>${esc(f.label)}</label><div class="check-grid">${boxes}</div>${extra}</div>`;
+        }
+        if (f.type === 'radio') {
+          const opts = f.options.map((o) =>
+            `<label class="check-item"><input type="radio" name="${f.id}" data-fid="${f.id}" value="${o.id}"><span>${esc(o.label)}</span></label>`
+          ).join('');
+          return `<div class="field"><label>${esc(f.label)}</label><div class="check-grid">${opts}</div></div>`;
+        }
+        const req = f.required ? ' required' : '';
+        if (f.type === 'textarea') {
+          const rows = f.rows || 3;
+          const lg = f.large ? ' class="rpt-field-lg"' : '';
+          return `<div class="field"><label>${esc(f.label)}</label><textarea data-fid="${f.id}" rows="${rows}"${lg}${req}></textarea></div>`;
+        }
+        const isToday = f.type === 'date' && (f.id === 'dateOfCall' || f.id === 'dateCallCompleted');
+        const val = isToday ? ` value="${todayISO()}"` : '';
+        const now = new Date();
+        const timeNow = f.type === 'time' && f.id === 'startTime'
+          ? ` value="${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}"` : '';
+        if (f.type === 'date') {
+          return `<div class="field"><label>${esc(f.label)}</label><div class="date-wrap"><input type="date" data-fid="${f.id}"${req}${val}><button type="button" class="date-btn" aria-label="開啟日曆">📅</button></div></div>`;
+        }
+        if (f.type === 'time') {
+          return `<div class="field"><label>${esc(f.label)}</label><div class="time-wrap"><input type="time" data-fid="${f.id}"${req}${timeNow}><button type="button" class="time-btn" aria-label="開啟時間">🕐</button></div></div>`;
+        }
+        return `<div class="field"><label>${esc(f.label)}</label><input type="${f.type}" data-fid="${f.id}"${req}${val}></div>`;
+      }).join('');
+
+      formFieldsEl.querySelectorAll('[data-fid]').forEach((el) => {
+        el.addEventListener('input', onFieldChange);
+        el.addEventListener('change', onFieldChange);
+      });
+
+      formFieldsEl.querySelectorAll('.date-wrap').forEach((wrap) => {
+        const input = wrap.querySelector('input[type=date]');
+        const btn = wrap.querySelector('.date-btn');
+        const open = () => openDatePicker(input);
+        btn?.addEventListener('click', (e) => { e.preventDefault(); open(); });
+        input?.addEventListener('click', open);
+      });
+      formFieldsEl.querySelectorAll('.time-wrap').forEach((wrap) => {
+        const input = wrap.querySelector('input[type=time]');
+        const btn = wrap.querySelector('.time-btn');
+        const open = () => openTimePicker(input);
+        btn?.addEventListener('click', (e) => { e.preventDefault(); open(); });
+        input?.addEventListener('click', open);
+      });
+
+      const start = formFieldsEl.querySelector('[data-fid="startTime"]');
+      const end = formFieldsEl.querySelector('[data-fid="completionTime"]');
+      const dur = formFieldsEl.querySelector('[data-fid="durationHours"]');
+      const calcDur = () => {
+        if (!start?.value || !end?.value || dur?.dataset.manual) return;
+        const [sh, sm] = start.value.split(':').map(Number);
+        const [eh, em] = end.value.split(':').map(Number);
+        let mins = (eh * 60 + em) - (sh * 60 + sm);
+        if (mins < 0) mins += 24 * 60;
+        dur.value = (mins / 60).toFixed(2).replace(/\.?0+$/, '') || '0';
+        renderReportSheet();
+      };
+      if (start) start.addEventListener('change', calcDur);
+      if (end) end.addEventListener('change', calcDur);
+      if (dur) dur.addEventListener('input', () => { dur.dataset.manual = dur.value.trim() ? '1' : ''; });
+
+      renderReportSheet();
+    }
+
+    let renderTimer = null;
+    let resizeTimer = null;
+    function onViewportChange() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { resizeCanvas(); scalePreview(); }, 120);
+    }
+    function onFieldChange() {
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(renderReportSheet, 120);
+    }
+
+    const RPT_COLS = '<colgroup><col span="1" style="width:22%"><col span="1" style="width:28%"><col span="1" style="width:22%"><col span="1" style="width:28%"></colgroup>';
+
+    function buildStGrid(d, templateId) {
+      const stLabels = getServiceTypeLabels(templateId);
+      const st = d.serviceTypeChecks || [];
+      const stItem = (id, extra = '') => {
+        const item = stLabels.find((x) => x.id === id);
+        const on = id === 'serviceOthers' ? (st.includes('serviceOthers') || !!d.serviceTypeOthers) : st.includes(id);
+        return `<span class="rpt-st-item">${chk(on)} ${item?.label || id}${extra}</span>`;
+      };
+      const stOthersExtra = d.serviceTypeOthers ? ': ' + esc(d.serviceTypeOthers) : '';
+      return `<div class="rpt-st-grid">
+        ${stItem('maintenance')}
+        ${stItem('underWarranty')}
+        ${stItem('chargeableEcall')}
+        ${stItem('serviceOthers', stOthersExtra)}
+      </div>`;
+    }
+
+    function buildServiceReportHTML_SG(d, sig) {
+      const stGrid = buildStGrid(d, 'sg');
+      const fuYes = d.followUpRequired === 'yes';
+      const fuNo = d.followUpRequired === 'no';
+      const fus = d.followUpSections || [];
+      const hasParts = fus.includes('partsReplacement');
+      const hasLoan = fus.includes('loanEquipment');
+      const hasQuote = fus.includes('hasQuotation');
+      const hasOthers = fus.includes('hasOthers');
+      const sigInner = sig ? `<img src="${sig}" alt="sig">` : '';
+      return `
+        <div class="rpt-header">
+          <img class="rpt-logo" src="airlink-logo.png" alt="AIRLINK">
+          <div class="rpt-header-mid"><div class="rpt-h1">SERVICE REPORT</div></div>
+          <div class="rpt-jobno"><span class="rpt-jobno-lbl">Your PO No:</span><span class="rpt-jobno-val">${esc(d.jobNumber)}</span></div>
+        </div>
+        <div class="rpt-section">Detail</div>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr><td class="rpt-lbl">Customer:</td><td colspan="3" class="rpt-val">${esc(d.customerName)}</td></tr>
+          <tr><td class="rpt-lbl">Site Address:</td><td colspan="3" class="rpt-val">${esc(d.siteAddress)}</td></tr>
+          <tr><td class="rpt-lbl">Service Type:</td><td colspan="3" class="rpt-val">${stGrid}</td></tr>
+        </table>
+        <div class="rpt-section">Service Request</div>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr>
+            <td class="rpt-lbl">Date of call:</td><td class="rpt-val rpt-date">${esc(d.dateOfCall)}</td>
+            <td class="rpt-lbl">Start Time:</td><td class="rpt-val rpt-date">${esc(d.startTime)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Request by:</td><td class="rpt-val">${esc(d.requestBy)}</td>
+            <td class="rpt-lbl">Completion Time:</td><td class="rpt-val rpt-date">${esc(d.completionTime)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Duration:</td>
+            <td class="rpt-val rpt-single">${esc(d.durationHours || '')}</td>
+            <td class="rpt-lbl"></td><td class="rpt-val"></td>
+          </tr>
+          <tr><td class="rpt-lbl">Faults:</td><td colspan="3" class="rpt-val rpt-area-faults">${esc(d.faults)}</td></tr>
+        </table>
+        <div class="rpt-section">Actual Work</div>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr><td class="rpt-lbl">Action Taken:</td><td colspan="3" class="rpt-val rpt-area-action">${esc(d.actionTaken)}</td></tr>
+        </table>
+        <div class="rpt-section">Follow Up</div>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr>
+            <td class="rpt-lbl">Is follow up request:</td>
+            <td class="rpt-val">${chk(fuYes)} Yes &nbsp;&nbsp; ${chk(fuNo)} No</td>
+            <td class="rpt-lbl">Follow up Date:</td><td class="rpt-val rpt-date">${esc(d.followUpDate)}</td>
+          </tr>
+          <tr><td class="rpt-lbl">Action:</td><td colspan="3" class="rpt-val rpt-area">${esc(d.followUpAction)}</td></tr>
+        </table>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr class="rpt-dual-hdr">
+            <td colspan="2">${chk(hasParts)} Parts Replacement:</td>
+            <td colspan="2">${chk(hasLoan)} Loan Equipment</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl-sm">Model #:</td><td class="rpt-val">${esc(d.partsModel)}</td>
+            <td class="rpt-lbl-sm">Model #:</td><td class="rpt-val">${esc(d.loanModel)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl-sm">Manufacturer:</td><td class="rpt-val">${esc(d.partsManufacturer)}</td>
+            <td class="rpt-lbl-sm">Manufacturer:</td><td class="rpt-val">${esc(d.loanManufacturer)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl-sm">Description:</td><td class="rpt-val rpt-area-sm">${esc(d.partsDescription)}</td>
+            <td class="rpt-lbl-sm">Description:</td><td class="rpt-val rpt-area-sm">${esc(d.loanDescription)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl-sm">Qty:</td><td class="rpt-val">${esc(d.partsQty)}</td>
+            <td class="rpt-lbl-sm">Qty:</td><td class="rpt-val">${esc(d.loanQty)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">${chk(hasQuote)} Quotation</td>
+            <td class="rpt-val">${esc(d.quotation)}</td>
+            <td class="rpt-lbl"></td><td class="rpt-val"></td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">${chk(hasOthers)} Others:</td>
+            <td colspan="3" class="rpt-val rpt-area">${esc(d.others)}</td>
+          </tr>
+        </table>
+        <div class="rpt-section">Service Confirmation</div>
+        <p class="rpt-legal">The above work has been carried out to our satisfaction</p>
+        <table class="rpt-tbl rpt-sig-table rpt-sig-row">${RPT_COLS}
+          <tr>
+            <td class="rpt-lbl">Signature (Airlink):</td><td class="rpt-val">${esc(d.engineerName)}</td>
+            <td class="rpt-lbl">Signature or Company Chop (Customer):</td>
+            <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot">${sigInner}</div></td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Airlink Representative:</td><td class="rpt-val">${esc(d.engineerName)}</td>
+            <td class="rpt-lbl">Customer's Representative:</td><td class="rpt-val">${esc(d.customerRepresentative)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Date Call Completed:</td><td colspan="3" class="rpt-val rpt-date">${esc(d.dateCallCompleted)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Remarks:</td><td colspan="3" class="rpt-val rpt-remarks">${esc(d.remarks)}</td>
+          </tr>
+        </table>
+        <div class="rpt-company">
+          <strong>Airlink Security Technologies Pte Ltd</strong>
+          Address: 33 Ubi Avenue 3, #07-37F Vertex, Tower A Singapore 408868<br>
+          Email: service@airlink-asia.com
+        </div>`;
+    }
+
+    function buildServiceReportHTML_TW(d, sig) {
+      const stGrid = buildStGrid(d, 'tw');
+      const fuYes = d.followUpRequired === 'yes';
+      const fuNo = d.followUpRequired === 'no';
+      const fus = d.followUpSections || [];
+      const hasParts = fus.includes('partsReplacement');
+      const hasLoan = fus.includes('loanEquipment');
+      const hasQuote = fus.includes('hasQuotation');
+      const hasOthers = fus.includes('hasOthers');
+      const sigInner = sig ? `<img src="${sig}" alt="sig">` : '';
+      const dur = d.durationHours ? `${esc(d.durationHours)} hr` : '';
+      const company = esc(config.companyName || DEFAULT_CONFIG.companyName);
+      return `
+        <div class="rpt-header">
+          <img class="rpt-logo" src="airlink-logo.png" alt="AIRLINK">
+          <div class="rpt-header-mid"><div class="rpt-h1">SERVICE REPORT</div></div>
+          <div class="rpt-jobno"><span class="rpt-jobno-lbl">Job No/項目號:</span><span class="rpt-jobno-val">${esc(d.jobNumber)}</span></div>
+        </div>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr><td class="rpt-lbl">Customer/客戶:</td><td colspan="3" class="rpt-val">${esc(d.customerName)}</td></tr>
+          <tr><td class="rpt-lbl">Site Address/地址:</td><td colspan="3" class="rpt-val">${esc(d.siteAddress)}</td></tr>
+          <tr><td class="rpt-lbl">Service Type/服務型態:</td><td colspan="3" class="rpt-val">${stGrid}</td></tr>
+        </table>
+        <div class="rpt-section">Service Request</div>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr>
+            <td class="rpt-lbl">Date of call/日期:</td><td class="rpt-val rpt-date">${esc(d.dateOfCall)}</td>
+            <td class="rpt-lbl">Start Time/開始時間:</td><td class="rpt-val rpt-date">${esc(d.startTime)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Request by/要求者:</td><td class="rpt-val">${esc(d.requestBy)}</td>
+            <td class="rpt-lbl">Completion Time/完成時間:</td><td class="rpt-val rpt-date">${esc(d.completionTime)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Duration (Hours)/所用時間:</td>
+            <td class="rpt-val rpt-single">${dur}</td>
+            <td class="rpt-lbl"></td><td class="rpt-val"></td>
+          </tr>
+          <tr><td class="rpt-lbl">Faults/問題:</td><td colspan="3" class="rpt-val rpt-area">${esc(d.faults)}</td></tr>
+          <tr><td class="rpt-lbl">Problem/實際問題:</td><td colspan="3" class="rpt-val rpt-area-lg">${esc(d.problem)}</td></tr>
+        </table>
+        <div class="rpt-section">Actual Work</div>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr><td class="rpt-lbl">Action Taken/解決方案:</td><td colspan="3" class="rpt-val rpt-area-lg">${esc(d.actionTaken)}</td></tr>
+        </table>
+        <div class="rpt-section">Follow Up</div>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr>
+            <td class="rpt-lbl">Follow up required/需要跟進:</td>
+            <td class="rpt-val">${chk(fuYes)} Yes &nbsp;&nbsp; ${chk(fuNo)} No</td>
+            <td class="rpt-lbl">Follow up Date/跟進日期:</td><td class="rpt-val rpt-date">${esc(d.followUpDate)}</td>
+          </tr>
+          <tr><td class="rpt-lbl">Action/解決方案:</td><td colspan="3" class="rpt-val rpt-area">${esc(d.followUpAction)}</td></tr>
+        </table>
+        <table class="rpt-tbl">${RPT_COLS}
+          <tr class="rpt-dual-hdr">
+            <td colspan="2">${chk(hasParts)} Parts Replacement/更換零件:</td>
+            <td colspan="2">${chk(hasLoan)} Loan Equipment/借用零件</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl-sm">Model #/型號:</td><td class="rpt-val">${esc(d.partsModel)}</td>
+            <td class="rpt-lbl-sm">Model #:</td><td class="rpt-val">${esc(d.loanModel)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl-sm">Manufacturer/原廠:</td><td class="rpt-val">${esc(d.partsManufacturer)}</td>
+            <td class="rpt-lbl-sm">Manufacturer:</td><td class="rpt-val">${esc(d.loanManufacturer)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl-sm">Description/明細:</td><td class="rpt-val rpt-area-sm">${esc(d.partsDescription)}</td>
+            <td class="rpt-lbl-sm">Description:</td><td class="rpt-val rpt-area-sm">${esc(d.loanDescription)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl-sm">Qty:</td><td class="rpt-val">${esc(d.partsQty)}</td>
+            <td class="rpt-lbl-sm">Qty:</td><td class="rpt-val">${esc(d.loanQty)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">${chk(hasQuote)} Quotation#/報價</td>
+            <td class="rpt-val">${esc(d.quotation)}</td>
+            <td class="rpt-lbl"></td><td class="rpt-val"></td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">${chk(hasOthers)} Others:</td>
+            <td colspan="3" class="rpt-val rpt-area">${esc(d.others)}</td>
+          </tr>
+        </table>
+        <div class="rpt-section">Service Confirmation</div>
+        <p class="rpt-legal">The above work has been carried out to our satisfaction/上述叫修已經符合我們的一般標準</p>
+        <table class="rpt-tbl rpt-sig-table rpt-sig-row">${RPT_COLS}
+          <tr>
+            <td class="rpt-lbl">Signature (Airlink):</td><td class="rpt-val">${esc(d.engineerName)}</td>
+            <td class="rpt-lbl">Signature or Company Chop (Customer):</td>
+            <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot">${sigInner}</div></td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Airlink Representative<br>工程師:</td><td class="rpt-val">${esc(d.engineerName)}</td>
+            <td class="rpt-lbl">Customer's Representative:</td><td class="rpt-val">${esc(d.customerRepresentative)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Date Call Completed<br>完成日:</td><td colspan="3" class="rpt-val rpt-date">${esc(d.dateCallCompleted)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Remarks:</td><td colspan="3" class="rpt-val rpt-remarks">${esc(d.remarks)}</td>
+          </tr>
+        </table>
+        <div class="rpt-company">
+          <strong>${company}</strong>
+          9F, No.219, Sec.3, Nanjing E. Rd.,<br>
+          Zhongshan District, Taipei City, 104506 Taiwan, R.O.C
+        </div>`;
+    }
+
+    function buildServiceReportHTML(d, sig, templateId = activeTemplate) {
+      return templateId === 'sg'
+        ? buildServiceReportHTML_SG(d, sig)
+        : buildServiceReportHTML_TW(d, sig);
+    }
+
+    function getSignatureDataUrl() {
+      if (!hasSignature) return '';
+      const displayW = canvas.parentElement?.clientWidth || 400;
+      const OUT_W = Math.round(Math.min(520, Math.max(400, displayW * 1.25)));
+      const OUT_H = Math.round(180 * (OUT_W / displayW));
+      const tmp = document.createElement('canvas');
+      tmp.width = OUT_W;
+      tmp.height = OUT_H;
+      const tctx = tmp.getContext('2d');
+      tctx.fillStyle = '#ffffff';
+      tctx.fillRect(0, 0, OUT_W, OUT_H);
+      if (canvas.width > 0 && canvas.height > 0) {
+        tctx.imageSmoothingEnabled = true;
+        tctx.imageSmoothingQuality = 'high';
+        tctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, OUT_W, OUT_H);
+      }
+      return tmp.toDataURL('image/png');
+    }
+
+    function refreshSignatureCache() {
+      cachedSigDataUrl = hasSignature ? getSignatureDataUrl() : '';
+    }
+
+    function waitForImages(root) {
+      const imgs = [...root.querySelectorAll('img')];
+      return Promise.all(imgs.map((img) => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        });
+      }));
+    }
+
+    async function ensureCaptureSignature() {
+      if (!hasSignature) return;
+      refreshSignatureCache();
+      const sig = cachedSigDataUrl;
+      if (!sig) return;
+      const html = `<img src="${sig}" alt="sig" class="rpt-capture-sig">`;
+      captureSheet.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
+      previewSheet.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
+      await waitForImages(captureSheet);
+    }
+
+    function updateSignaturePreview() {
+      refreshSignatureCache();
+      const html = cachedSigDataUrl ? `<img src="${cachedSigDataUrl}" alt="sig" class="rpt-capture-sig">` : '';
+      document.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
+    }
+
+    function renderReportSheet(sigOnly = false) {
+      saveConfig();
+      if (sigOnly) {
+        updateSignaturePreview();
+        return;
+      }
+      const d = getFieldValues();
+      const sig = hasSignature ? (cachedSigDataUrl || getSignatureDataUrl()) : '';
+      const html = buildServiceReportHTML(d, sig);
+      previewSheet.innerHTML = html;
+      captureSheet.innerHTML = html;
+      cachedSheetH = 0;
+      const logo = previewSheet.querySelector('.rpt-logo');
+      const afterLayout = () => {
+        cachedSheetH = measureSheetHeight();
+        scalePreview();
+      };
+      if (logo && !logo.complete) logo.addEventListener('load', afterLayout, { once: true });
+      requestAnimationFrame(afterLayout);
+    }
+
+    const SHEET_W = 794;
+    let cachedSheetH = 0;
+
+    function getActiveSheetHeight() {
+      return Math.max(previewSheet.offsetHeight, previewSheet.scrollHeight, 400);
+    }
+
+    function measureSheetHeight() {
+      const viewport = document.getElementById('previewViewport');
+      const scaleEl = document.getElementById('previewScale');
+      scaleEl.style.transform = 'none';
+      viewport.style.width = `${SHEET_W}px`;
+      viewport.style.height = 'auto';
+      return getActiveSheetHeight();
+    }
+
+    function scalePreview() {
+      const wrap = document.querySelector('.preview-wrap');
+      const viewport = document.getElementById('previewViewport');
+      const scaleEl = document.getElementById('previewScale');
+      const pad = 12;
+      const sheetH = cachedSheetH || measureSheetHeight();
+      if (!cachedSheetH) cachedSheetH = sheetH;
+      const availW = Math.max(wrap.clientWidth - pad, 200);
+      const scale = Math.min(1, availW / SHEET_W);
+      const scaledW = Math.ceil(SHEET_W * scale);
+      const scaledH = Math.ceil(sheetH * scale);
+
+      scaleEl.style.transform = `scale(${scale})`;
+      scaleEl.style.transformOrigin = 'top left';
+      viewport.style.width = `${scaledW}px`;
+      viewport.style.height = `${scaledH}px`;
+      captureSheet.style.transform = 'none';
+    }
+
+    function initForm() {
+      renderFormFields();
+    }
+
+    function initConfigUI() {
+      document.getElementById('cfgWebhook').value = config.webhookUrl;
+      document.getElementById('cfgDropboxFolder').value = config.dropboxFolder;
+      document.getElementById('cfgCompanyName').value = config.companyName;
+      ['cfgWebhook','cfgDropboxFolder','cfgCompanyName'].forEach((id) => {
+        document.getElementById(id).addEventListener('change', () => { saveConfig(); renderReportSheet(); });
+      });
+      document.getElementById('resetConfigBtn').addEventListener('click', resetToDeployDefaults);
+      updateUploadBanner();
+      if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        const hint = document.getElementById('installHint');
+        hint.textContent = `📲 手機測試：Webhook 已自動用 ${getUploadUrl()} 上傳`;
+        hint.classList.add('visible');
+      }
+    }
+
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const w = canvas.parentElement.clientWidth;
+      canvas.width = w * ratio; canvas.height = 180 * ratio;
+      canvas.style.width = w + 'px'; canvas.style.height = '180px';
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.strokeStyle = '#111827';
+      ctx.fillStyle = '#111827';
+      ctx.lineWidth = /Android|iPhone|iPad/i.test(navigator.userAgent) ? 3.2 : 2.6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (!hasSignature) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, 180); ctx.fillStyle = '#111827'; }
+    }
+
+    function getPosFromClient(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      return { x: clientX - r.left, y: clientY - r.top };
+    }
+
+    function getPos(e) {
+      const t = e.touches ? e.touches[0] : e;
+      return getPosFromClient(t.clientX, t.clientY);
+    }
+
+    function plotDot(x, y) {
+      ctx.beginPath();
+      ctx.arc(x, y, ctx.lineWidth / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function strokeSeg(x0, y0, x1, y1) {
+      const dist = Math.hypot(x1 - x0, y1 - y1);
+      if (dist < 0.2) return;
+      const step = 0.8;
+      const n = Math.max(1, Math.ceil(dist / step));
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const x = x0 + (x1 - x0) * t;
+        const y = y0 + (y1 - y0) * t;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function collectDrawPoints(e) {
+      const r = canvas.getBoundingClientRect();
+      const pts = [];
+      if (e.getCoalescedEvents) {
+        for (const ev of e.getCoalescedEvents()) {
+          pts.push(getPosFromClient(ev.clientX, ev.clientY));
+        }
+      }
+      if (!pts.length) pts.push(getPos(e));
+      return pts;
+    }
+
+    function startDraw(e) {
+      e.preventDefault();
+      isDrawing = true;
+      hasSignature = true;
+      const p = getPos(e);
+      lastX = p.x;
+      lastY = p.y;
+      plotDot(p.x, p.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      const pts = collectDrawPoints(e);
+      for (const p of pts) {
+        strokeSeg(lastX, lastY, p.x, p.y);
+        lastX = p.x;
+        lastY = p.y;
+      }
+    }
+
+    function stopDraw(e) {
+      if (e) e.preventDefault();
+      if (!isDrawing) return;
+      isDrawing = false;
+      clearTimeout(sigPreviewTimer);
+      refreshSignatureCache();
+      renderReportSheet(true);
+    }
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDraw, { passive: false });
+    document.getElementById('clearSignatureBtn').addEventListener('click', () => {
+      hasSignature = false;
+      cachedSigDataUrl = '';
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.parentElement.clientWidth, 180);
+      renderReportSheet(true);
+    });
+
+    function sanitizeFilename(str) { return (str || 'Unknown').trim().replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_'); }
+    function buildFilename(d) {
+      const date = (d.dateCallCompleted || d.dateOfCall || todayISO()).replace(/-/g, '');
+      const tag = getTemplateDef().fileTag;
+      return `${date}_${sanitizeFilename(d.customerName)}_${sanitizeFilename(d.jobNumber)}_${tag}.pdf`;
+    }
+
+    function validateForm(d) {
+      for (const f of getFormSchema()) {
+        if (!f.required) continue;
+        if (f.type === 'checks' || f.type === 'radio') continue;
+        if (!d[f.id]) return `請填寫：${f.label.split('/')[0]}`;
+      }
+      if (!hasSignature) return '請客戶簽名';
+      return null;
+    }
+
+    function captureScale() {
+      const isMobile = window.innerWidth < 768;
+      const sheetH = Math.max(cachedSheetH || measureSheetHeight(), 400);
+      const targetDpi = isMobile ? 340 : 400;
+      let scale = targetDpi / 96;
+      const maxPixels = isMobile ? 18e6 : 32e6;
+      const pixels = SHEET_W * sheetH * scale * scale;
+      if (pixels > maxPixels) scale = Math.sqrt(maxPixels / (SHEET_W * sheetH));
+      return Math.max(3, Math.min(scale, isMobile ? 4.25 : 5));
+    }
+
+    function prepareCaptureSheetForShot() {
+      const prev = {
+        position: captureSheet.style.position,
+        left: captureSheet.style.left,
+        top: captureSheet.style.top,
+        zIndex: captureSheet.style.zIndex,
+        transform: captureSheet.style.transform
+      };
+      captureSheet.style.position = 'fixed';
+      captureSheet.style.left = '0';
+      captureSheet.style.top = '0';
+      captureSheet.style.zIndex = '-1';
+      captureSheet.style.transform = 'none';
+      return prev;
+    }
+
+    function restoreCaptureSheetStyle(prev) {
+      captureSheet.style.position = prev.position;
+      captureSheet.style.left = prev.left;
+      captureSheet.style.top = prev.top;
+      captureSheet.style.zIndex = prev.zIndex;
+      captureSheet.style.transform = prev.transform;
+    }
+
+    async function captureReportShot() {
+      if (typeof html2canvas !== 'function') throw new Error('html2canvas 未載入，請重新整理頁面');
+      renderReportSheet();
+      await ensureCaptureSignature();
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const scale = captureScale();
+      const captureStyle = prepareCaptureSheetForShot();
+      try {
+        return await html2canvas(captureSheet, {
+          scale,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: SHEET_W,
+          windowWidth: SHEET_W,
+          scrollX: 0,
+          scrollY: 0,
+          imageTimeout: 15000,
+          logging: false,
+          onclone: (_doc, el) => {
+            el.style.opacity = '1';
+            el.style.visibility = 'visible';
+            el.style.background = '#ffffff';
+            el.style.color = '#000000';
+            el.style.transform = 'none';
+            el.style.webkitFontSmoothing = 'antialiased';
+            el.style.textRendering = 'geometricPrecision';
+            el.querySelectorAll('*').forEach((node) => {
+              node.style.opacity = '1';
+              node.style.visibility = 'visible';
+              if (node.tagName !== 'IMG') node.style.color = '#000000';
+            });
+            el.querySelectorAll('.rpt-sig-box img, .rpt-capture-sig').forEach((img) => {
+              img.style.position = 'static';
+              img.style.display = 'block';
+              img.style.visibility = 'visible';
+              img.style.opacity = '1';
+              img.style.imageRendering = 'auto';
+            });
+          }
+        });
+      } finally {
+        restoreCaptureSheetStyle(captureStyle);
+      }
+    }
+
+    async function buildPdfBlobFromShot(shot) {
+      const png = shot.toDataURL('image/png');
+      const JsPDF = window.jspdf?.jsPDF;
+      if (JsPDF) {
+        const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: false });
+        const pageW = 210;
+        const pageH = 297;
+        const imgH = shot.height * pageW / shot.width;
+        let y = 0;
+        let remaining = imgH;
+        while (remaining > 0) {
+          if (y > 0) pdf.addPage();
+          pdf.addImage(png, 'PNG', 0, -y, pageW, imgH, undefined, 'NONE');
+          y += pageH;
+          remaining -= pageH;
+        }
+        return pdf.output('blob');
+      }
+      const jpeg = shot.toDataURL('image/jpeg', 0.96);
+      return canvasToPdfBlob(shot, jpeg);
+    }
+
+    async function generatePDFBlob() {
+      const shot = await captureReportShot();
+      return buildPdfBlobFromShot(shot);
+    }
+
+    async function savePhoneBackup(shot, pdfFilename) {
+      const imgName = pdfFilename.replace(/\.pdf$/i, '') + '_backup.jpg';
+      const blob = await new Promise((resolve, reject) => {
+        shot.toBlob((b) => (b ? resolve(b) : reject(new Error('無法產生備份圖片'))), 'image/jpeg', 0.96);
+      });
+      const file = new File([blob], imgName, { type: 'image/jpeg' });
+
+      if (navigator.share) {
+        try {
+          const canShareFiles = !navigator.canShare || navigator.canShare({ files: [file] });
+          if (canShareFiles) {
+            await navigator.share({ files: [file], title: 'Service Report Backup' });
+            return 'share';
+          }
+        } catch (e) {
+          if (e.name === 'AbortError') return 'cancelled';
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = imgName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+      return 'download';
+    }
+
+    function canvasToPdfBlob(canvas, jpegDataUrl) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const base64 = jpegDataUrl.split(',')[1];
+      const imgBytes = atob(base64);
+      const imgLen = imgBytes.length;
+      const parts = [];
+      const push = (s) => parts.push(s);
+      push('%PDF-1.4\n');
+      const offsets = [0];
+      const addObj = (n, body) => { offsets[n] = parts.join('').length; push(`${n} 0 obj\n${body}\nendobj\n`); };
+      addObj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+      addObj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+      const pw = 595.28;
+      const ph = Math.min(841.89, pw * h / w);
+      addObj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw.toFixed(2)} ${ph.toFixed(2)}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+      addObj(4, `<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgLen} >>\nstream\n${imgBytes}\nendstream`);
+      const content = `q ${pw.toFixed(2)} 0 0 ${ph.toFixed(2)} 0 0 cm /Im0 Do Q`;
+      addObj(5, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+      const xrefPos = parts.join('').length;
+      push('xref\n0 6\n0000000000 65535 f \n');
+      for (let i = 1; i <= 5; i++) push(`${String(offsets[i]).padStart(10, '0')} 00000 n \n`);
+      push(`trailer << /Size 6 /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`);
+      return new Blob([parts.join('')], { type: 'application/pdf' });
+    }
+
+    async function uploadReport() {
+      const d = getFieldValues();
+      const err = validateForm(d);
+      if (err) { showToast(err, 'error'); return; }
+      if (!cachedSigDataUrl && hasSignature) refreshSignatureCache();
+      saveConfig();
+      const filename = buildFilename(d);
+      const btn = document.getElementById('uploadBtn');
+      const uploadUrl = getUploadUrl();
+      const isLocal = isLocalTestMode(uploadUrl);
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>正在生成 PDF…';
+      showToast('⏳ 正在生成 PDF，請稍候…');
+      try {
+        const shot = await captureReportShot();
+        const pdfBlob = await buildPdfBlobFromShot(shot);
+        btn.innerHTML = '<span class="spinner"></span>正在上傳…';
+        showToast(isLocal && !hasServerDropbox()
+          ? '⏳ 測試模式：上傳至電腦 REPORT/（未去 Dropbox）…'
+          : `⏳ 正在上傳至 Dropbox ${config.dropboxFolder}…`);
+        const fd = new FormData();
+        fd.append('file', pdfBlob, filename);
+        fd.append('filename', filename);
+        fd.append('dropboxFolder', config.dropboxFolder);
+        fd.append('formType', getTemplateDef().formType);
+        fd.append('customerName', d.customerName || '');
+        fd.append('jobNumber', d.jobNumber || '');
+        fd.append('jsonPayload', JSON.stringify(d));
+        const res = await fetch(uploadUrl, { method: 'POST', body: fd });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        btn.innerHTML = '<span class="spinner"></span>正在儲存手機備份…';
+        const backup = await savePhoneBackup(shot, filename);
+
+        if (isLocal) {
+          const info = await res.json().catch(() => ({}));
+          if (info.dropbox?.ok) {
+            let msg = `🚀 已上傳至 Dropbox\n${info.dropbox.path || config.dropboxFolder + filename}`;
+            if (backup === 'share') msg += '\n📷 請在分享畫面選「儲存圖片」做備份';
+            else if (backup === 'download') msg += '\n📷 備份圖片已下載至手機';
+            showToast(msg, 'success', 7000);
+          } else if (info.dropbox?.skipped) {
+            let msg = `🚀 已存電腦：${info.filename || filename}\n⚠️ Dropbox 未設定 — 請編輯 server-config.json 放入 Token`;
+            if (backup === 'share') msg += '\n📷 請在分享畫面選「儲存圖片」做備份';
+            else if (backup === 'download') msg += '\n📷 備份圖片已下載至手機';
+            showToast(msg, 'success', 7000);
+          } else if (info.dropbox && info.dropbox.ok === false) {
+            let msg = `⚠️ 電腦已存檔，但 Dropbox 失敗\n${(info.dropbox.error || '').slice(0, 120)}`;
+            showToast(msg, 'error', 8000);
+          } else {
+            let msg = `🚀 測試上傳成功：${info.filename || filename}\n⚠️ 檔案在電腦 REPORT/，未上傳 Dropbox`;
+            if (backup === 'share') msg += '\n📷 請在分享畫面選「儲存圖片」做備份';
+            else if (backup === 'download') msg += '\n📷 備份圖片已下載至手機';
+            showToast(msg, 'success', 7000);
+          }
+        } else {
+          let msg = `🚀 已上傳至 Dropbox ${config.dropboxFolder}`;
+          if (backup === 'share') msg += '\n📷 請在分享畫面選「儲存圖片」做備份';
+          else if (backup === 'download') msg += '\n📷 備份圖片已下載至手機';
+          else if (backup === 'cancelled') msg += '\n（已取消手機備份）';
+          showToast(msg, 'success', 7000);
+        }
+      } catch (e) {
+        console.error(e);
+        showToast('上傳失敗：' + (e.message || '請檢查 Webhook / Wi-Fi'), 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✅ 一鍵上傳報告 / UPLOAD REPORT';
+      }
+    }
+
+    async function boot() {
+      try {
+        await loadDeployConfig();
+        config = loadConfig();
+        await fetchUploadStatus();
+        document.getElementById('uploadBtn').addEventListener('click', uploadReport);
+        document.getElementById('configToggle').addEventListener('click', () => document.getElementById('configPanel').classList.toggle('open'));
+        window.addEventListener('resize', onViewportChange);
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', onViewportChange);
+        }
+        initConfigUI();
+        loadStoredDrafts();
+        initTemplateTabs();
+        initForm();
+        applyFormDraft(formDrafts[activeTemplate]);
+        renderReportSheet();
+        resizeCanvas();
+        if (!window.matchMedia('(display-mode: standalone)').matches && !navigator.standalone && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+          document.getElementById('installHint').classList.add('visible');
+        }
+      } catch (err) {
+        console.error(err);
+        const el = document.getElementById('bootError');
+        el.style.display = 'block';
+        el.textContent = 'App 載入失敗：' + err.message + ' — 請用 Chrome 開 http://localhost:8765 並重新整理';
+        bindFallbackInputs();
+      }
+    }
+
+    function bindFallbackInputs() {
+      formFieldsEl.querySelectorAll('[data-fid]').forEach((el) => {
+        el.addEventListener('input', onFieldChange);
+        el.addEventListener('change', onFieldChange);
+      });
+      renderReportSheet();
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+{
+  "pageWidth": 595.3200073242188,
+  "pageHeight": 841.9200439453125,
+  "yAxis": "down",
+  "image": "templates/sg-service-report.png",
+  "fontSize": 8.8,
+  "fields": {
+    "poNumber": [
+      415.1,
+      66.1,
+      558,
+      79.1
+    ],
+    "customerName": [
+      128,
+      85.8,
+      558,
+      98.8
+    ],
+    "siteAddress": [
+      137.4,
+      102.6,
+      558,
+      115.6
+    ],
+    "serviceTypeOthers": [
+      411.5,
+      149.7,
+      558,
+      162.5
+    ],
+    "dateOfCall": [
+      133.3,
+      174.3,
+      280,
+      187.3
+    ],
+    "startTime": [
+      458.1,
+      174.3,
+      558,
+      187.3
+    ],
+    "requestBy": [
+      131.7,
+      188.9,
+      280,
+      201.9
+    ],
+    "completionTime": [
+      458.1,
+      188.9,
+      558,
+      201.9
+    ],
+    "duration": [
+      460.7,
+      204.2,
+      558,
+      217.2
+    ],
+    "faults": [
+      143,
+      228.4,
+      558,
+      298.4
+    ],
+    "actionTaken": [
+      143,
+      314.2,
+      558,
+      484.2
+    ],
+    "followUpDate": [
+      460.5,
+      471.7,
+      558,
+      484.7
+    ],
+    "followUpAction": [
+      128,
+      488.3,
+      558,
+      501.3
+    ],
+    "partsModel": [
+      118.5,
+      518.9,
+      310,
+      530.9
+    ],
+    "loanModel": [
+      364.9,
+      518.9,
+      558,
+      530.9
+    ],
+    "partsManufacturer": [
+      136.7,
+      532.4,
+      310,
+      544.4
+    ],
+    "loanManufacturer": [
+      383.1,
+      532.4,
+      558,
+      544.4
+    ],
+    "partsDescription": [
+      129.8,
+      546.0,
+      310,
+      558.0
+    ],
+    "loanDescription": [
+      376.2,
+      546.0,
+      558,
+      558.0
+    ],
+    "partsQty": [
+      102.3,
+      560.5,
+      310,
+      572.5
+    ],
+    "loanQty": [
+      348.7,
+      559.6,
+      558,
+      571.6
+    ],
+    "quotation": [
+      141.5,
+      578.3,
+      558,
+      591.3
+    ],
+    "others": [
+      136.0,
+      593.6,
+      558,
+      611.6
+    ],
+    "signatureAirlink": [
+      143,
+      657.9,
+      310,
+      687.9
+    ],
+    "signatureCustomer": [
+      390,
+      657.9,
+      558,
+      691.9
+    ],
+    "engineerName": [
+      181.8,
+      695.5,
+      310,
+      708.5
+    ],
+    "customerRepresentative": [
+      443.5,
+      695.5,
+      558,
+      708.5
+    ],
+    "dateCallCompleted": [
+      175.6,
+      712.1,
+      310,
+      725.1
+    ],
+    "remarks": [
+      128,
+      746.4,
+      558,
+      774.4
+    ]
+  },
+  "checks": {
+    "maintenance": [
+      189.4,
+      133.6
+    ],
+    "underWarranty": [
+      258.9,
+      133.6
+    ],
+    "chargeableEcall": [
+      189.4,
+      150.7
+    ],
+    "serviceOthers": [
+      318.7,
+      150.7
+    ],
+    "followUpYes": [
+      238,
+      472.2
+    ],
+    "followUpNo": [
+      278,
+      472.2
+    ],
+    "partsReplacement": [
+      78.0,
+      505.8
+    ],
+    "loanEquipment": [
+      324.3,
+      505.8
+    ],
+    "hasQuotation": [
+      78.0,
+      579.3
+    ],
+    "hasOthers": [
+      78.0,
+      594.6
+    ]
+  }
+}
