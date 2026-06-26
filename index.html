@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
@@ -75,6 +75,9 @@
     .config-toggle{width:100%;padding:10px;margin-bottom:12px;text-align:left}
     .config-panel{display:none;margin-bottom:16px}
     .config-panel.open{display:block}
+    .config-advanced{margin-top:10px;font-size:.82rem;color:var(--muted)}
+    .config-advanced summary{cursor:pointer;color:var(--text);padding:6px 0}
+    .config-advanced .field{margin-top:10px}
     .config-hint{font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.5}
     .upload-target{
       text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:12px;
@@ -99,6 +102,26 @@
     }
     .toast.show{transform:translateX(-50%) translateY(0)}
     .toast.success{border-color:var(--success)} .toast.error{border-color:var(--danger)}
+    .mobile-email-panel{
+      position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center;
+      padding:0 0 calc(var(--footer-h) + var(--safe-bottom))
+    }
+    .mobile-email-panel[hidden]{display:none!important}
+    .mobile-email-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+    .mobile-email-sheet{
+      position:relative;width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);
+      border-radius:16px 16px 0 0;padding:18px 16px 20px;box-shadow:0 -8px 40px rgba(0,0,0,.35)
+    }
+    .mobile-email-sheet h3{margin:0 0 10px;font-size:1rem}
+    .mobile-email-steps{margin:0 0 14px;padding-left:1.2rem;font-size:.82rem;line-height:1.55;color:var(--muted)}
+    .mobile-email-steps b{color:var(--text)}
+    .mobile-email-btn{
+      display:block;width:100%;margin-top:8px;padding:14px 16px;border-radius:10px;font-size:.95rem;
+      font-weight:600;text-align:center;text-decoration:none;cursor:pointer;border:none
+    }
+    .mobile-email-btn.primary{background:var(--accent);color:#fff}
+    .mobile-email-btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+    .mobile-email-btn.ghost{background:transparent;color:var(--muted);font-size:.82rem;font-weight:500}
     .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -178,17 +201,18 @@
 <body>
   <header class="app-header">
     <h1>Airlink Service Report</h1>
-    <p>填 Service Report → 客戶簽名 → 上傳 Dropbox</p>
+    <p>填寫 Service Report → 客戶簽名 → Email 傳送</p>
   </header>
   <main>
     <div id="installHint" class="install-hint">📲 加入主畫面後可一鍵開啟、隱藏網址列</div>
-    <div id="uploadTargetBanner" class="upload-target">📁 載入上傳設定中…</div>
-    <button type="button" class="config-toggle" id="configToggle">⚙️ 上傳設定（預設已設好，可按此修改）</button>
+    <button type="button" class="config-toggle" id="configToggle">⚙️ 進階設定（通常不必修改）</button>
     <div class="config-panel card" id="configPanel">
-      <div class="field"><label>Webhook URL（Make / n8n）</label><input type="text" id="cfgWebhook" placeholder="https://hook.make.com/..."></div>
-      <div class="field"><label>Dropbox 上傳資料夾</label><input type="text" id="cfgDropboxFolder" placeholder="/REPORT/"></div>
       <div class="field"><label>公司名稱（表頭，可選）</label><input type="text" id="cfgCompanyName" placeholder="Airlink Security Technologies Ltd."></div>
-      <p class="config-hint">同事一般<strong>唔使改</strong>，填表簽名後直接上傳即可。<br>Make 路徑：<code>{{dropboxFolder}}{{filename}}</code><br>本地測試上 Dropbox：編輯 <code>server-config.json</code> 放入 Dropbox Token<br>管理員可改 <code>deploy-config.json</code> 更新全公司預設（改完請加 <code>configRevision</code> 數字）。</p>
+      <details class="config-advanced">
+        <summary>Webhook / Dropbox</summary>
+        <div class="field"><label>Webhook URL（Make / n8n）</label><input type="text" id="cfgWebhook" placeholder="https://hook.make.com/..."></div>
+        <div class="field"><label>Dropbox 上傳資料夾</label><input type="text" id="cfgDropboxFolder" placeholder="/REPORT/"></div>
+      </details>
       <button type="button" class="btn-reset-default" id="resetConfigBtn">↩ 恢復公司預設</button>
     </div>
 
@@ -203,7 +227,7 @@
 
     <form id="reportForm" novalidate>
       <section class="card">
-        <h2 class="card-title">Step 1 · 輸入資料（自動對位表格欄位）</h2>
+        <h2 class="card-title">Step 1 · 輸入資料</h2>
         <div id="formFields"></div>
         <p id="bootError" style="display:none;color:#ef4444;font-size:.85rem;margin-top:10px;padding:10px;background:rgba(239,68,68,.1);border-radius:8px"></p>
       </section>
@@ -216,21 +240,35 @@
         <div class="signature-wrap"><canvas id="signatureCanvas"></canvas></div>
         <div class="signature-actions"><button type="button" class="btn-clear" id="clearSignatureBtn">清除簽名 Clear</button></div>
       </section>
-      <button type="button" class="btn-upload" id="uploadBtn">✅ 一鍵上傳報告 / UPLOAD REPORT</button>
+      <button type="button" class="btn-upload" id="uploadBtn">📧 Email 報告 / SEND VIA EMAIL</button>
     </form>
   </main>
   <footer class="app-footer">Powered by Airlink Security Technologies | service@airlink-asia.com</footer>
   <div id="toast" class="toast" role="status"></div>
+  <div id="mobileEmailPanel" class="mobile-email-panel" hidden aria-hidden="true">
+    <div class="mobile-email-backdrop" id="mobileEmailBackdrop"></div>
+    <div class="mobile-email-sheet" role="dialog" aria-labelledby="mobileEmailTitle">
+      <h3 id="mobileEmailTitle">📧 寄送 Email</h3>
+      <ol class="mobile-email-steps">
+        <li>點按下方 <b>「開啟 PDF」</b></li>
+        <li>在 PDF 畫面點 Safari <b>分享</b> → 選 <b>郵件</b></li>
+        <li>確認 PDF 附件後，填寫收件人並寄出</li>
+      </ol>
+      <a id="mobilePdfOpen" class="mobile-email-btn primary" href="#" target="_blank" rel="noopener">開啟 PDF（請點此）</a>
+      <button type="button" id="mobileEmailClose" class="mobile-email-btn ghost">關閉</button>
+    </div>
+  </div>
   <div id="companyReportSheetCapture"></div>
 
   <script src="lib/html2canvas.min.js"></script>
   <script src="lib/jspdf.umd.min.js"></script>
   <script>
-    const CONFIG_VERSION = 8;
+    const CONFIG_VERSION = 10;
     const DEFAULT_CONFIG = {
       webhookUrl: '/upload',
       dropboxFolder: '/REPORT/',
       companyName: 'Airlink Security Technologies Ltd.',
+      emailTo: 'service@airlink-asia.com',
       deployRevision: 0
     };
     let deployDefaults = { ...DEFAULT_CONFIG };
@@ -239,7 +277,7 @@
     const SERVICE_TYPES_TW = [
       { id: 'maintenance', label: 'Maintenance/維護' },
       { id: 'underWarranty', label: 'Under Warranty/保固期' },
-      { id: 'chargeableEcall', label: 'Chargeable E-call/收款叫修' },
+      { id: 'chargeableEcall', label: 'Chargeable Service Call/收款叫修' },
       { id: 'serviceOthers', label: 'Others/其他' }
     ];
     const SERVICE_TYPES_SG = [
@@ -250,9 +288,9 @@
     ];
 
     const FOLLOW_UP_SECTIONS_TW = [
-      { id: 'partsReplacement', label: 'Parts Replacement/更換零件' },
-      { id: 'loanEquipment', label: 'Loan Equipment/借用零件' },
-      { id: 'hasQuotation', label: 'Quotation#/報價' },
+      { id: 'partsReplacement', label: 'Equipment Replacement/更換設備' },
+      { id: 'loanEquipment', label: 'Loan Equipment/借用設備' },
+      { id: 'hasQuotation', label: 'Quotation/需要報價' },
       { id: 'hasOthers', label: 'Others/其他' }
     ];
     const FOLLOW_UP_SECTIONS_SG = [
@@ -265,33 +303,28 @@
     const FORM_SCHEMA_TW = [
       { id: 'jobNumber', label: 'Job No/項目號', type: 'text', required: true },
       { id: 'customerName', label: 'Customer/客戶', type: 'text', required: true },
-      { id: 'siteAddress', label: 'Site Address/地址', type: 'text', required: true },
+      { id: 'siteAddress', label: 'Site Address/叫修地址', type: 'text', required: true },
       { id: 'serviceTypeChecks', label: 'Service Type/服務型態', type: 'checks', items: SERVICE_TYPES_TW, extra: { id: 'serviceTypeOthers', label: 'Others 其他說明', type: 'text' } },
-      { id: 'dateOfCall', label: 'Date of call/日期', type: 'date', required: true },
+      { id: 'dateOfCall', label: 'Date of service request/叫修請求日期', type: 'date', required: true },
+      { id: 'requestBy', label: 'Requested by/要求者', type: 'text' },
+      { id: 'dateOfServiceAttend', label: 'Date of Service Attend/前往叫修日期', type: 'date', required: true },
       { id: 'startTime', label: 'Start Time/開始時間', type: 'time', required: true },
-      { id: 'requestBy', label: 'Request by/要求者', type: 'text' },
       { id: 'completionTime', label: 'Completion Time/完成時間', type: 'time' },
       { id: 'durationHours', label: 'Duration (Hours)/所用時間', type: 'text' },
-      { id: 'faults', label: 'Faults/問題', type: 'textarea', required: true, rows: 4, large: true },
-      { id: 'problem', label: 'Problem/實際問題', type: 'textarea', required: true, rows: 4, large: true },
-      { id: 'actionTaken', label: 'Action Taken/解決方案', type: 'textarea', required: true, rows: 4, large: true },
+      { id: 'issues', label: 'Issues/問題', type: 'textarea', required: true, rows: 4, large: true },
+      { id: 'actionTaken', label: 'Faults Identified and Actions Taken/問題原因跟解決方案', type: 'textarea', required: true, rows: 6, large: true },
       { id: 'followUpRequired', label: 'Follow up required/需要跟進', type: 'radio', options: [{ id: 'yes', label: 'Yes' }, { id: 'no', label: 'No' }] },
       { id: 'followUpDate', label: 'Follow up Date/跟進日期', type: 'date' },
       { id: 'followUpAction', label: 'Action/解決方案 (Follow Up)', type: 'textarea', rows: 3, large: true },
       { id: 'followUpSections', label: 'Follow Up 項目（打勾適用）', type: 'checks', items: FOLLOW_UP_SECTIONS_TW },
-      { id: 'partsModel', label: 'Parts Model #/更換零件型號', type: 'text' },
-      { id: 'partsManufacturer', label: 'Parts Manufacturer/原廠', type: 'text' },
-      { id: 'partsDescription', label: 'Parts Description/明細', type: 'text' },
-      { id: 'partsQty', label: 'Parts Qty', type: 'text' },
-      { id: 'loanModel', label: 'Loan Model #/借用零件型號', type: 'text' },
-      { id: 'loanManufacturer', label: 'Loan Manufacturer', type: 'text' },
-      { id: 'loanDescription', label: 'Loan Description', type: 'text' },
-      { id: 'loanQty', label: 'Loan Qty', type: 'text' },
-      { id: 'quotation', label: 'Quotation#/報價內容', type: 'text' },
+      { id: 'partsModel', label: 'Equipment Model # and Description/更換設備型號跟描述', type: 'textarea', rows: 2 },
+      { id: 'partsQty', label: 'Equipment Qty/數量', type: 'text' },
+      { id: 'loanModel', label: 'Loan Model # and Description/借用設備型號跟描述', type: 'textarea', rows: 2 },
+      { id: 'loanQty', label: 'Loan Qty/數量', type: 'text' },
+      { id: 'quotation', label: 'Quotation/需要報價內容', type: 'text' },
       { id: 'others', label: 'Others/其他', type: 'textarea', rows: 3, large: true },
-      { id: 'engineerName', label: 'Airlink Representative/工程師', type: 'text', required: true },
+      { id: 'engineerName', label: 'Airlink Representative/凌科代表', type: 'text', required: true },
       { id: 'customerRepresentative', label: "Customer's Representative/客戶代表", type: 'text' },
-      { id: 'dateCallCompleted', label: 'Date Call Completed/完成日', type: 'date', required: true },
       { id: 'remarks', label: 'Remarks/備註', type: 'textarea', rows: 3, large: true }
     ];
 
@@ -373,8 +406,17 @@
       } catch { /* ignore */ }
     }
 
+    function migrateTwDraft(draft) {
+      if (!draft) return draft;
+      if (!draft.issues && draft.problem) draft.issues = draft.problem;
+      if (!draft.issues && draft.faults) draft.issues = draft.faults;
+      if (!draft.dateOfServiceAttend && draft.dateCallCompleted) draft.dateOfServiceAttend = draft.dateCallCompleted;
+      return draft;
+    }
+
     function applyFormDraft(draft) {
       if (!draft) return;
+      if (activeTemplate === 'tw') draft = migrateTwDraft({ ...draft });
       formFieldsEl.querySelectorAll('[data-fid]').forEach((el) => {
         const id = el.dataset.fid;
         const group = el.dataset.group;
@@ -425,6 +467,7 @@
           webhookUrl: data.webhookUrl ?? DEFAULT_CONFIG.webhookUrl,
           dropboxFolder: data.dropboxFolder ?? DEFAULT_CONFIG.dropboxFolder,
           companyName: data.companyName ?? DEFAULT_CONFIG.companyName,
+          emailTo: data.emailTo ?? DEFAULT_CONFIG.emailTo,
           deployRevision: Number(data.configRevision) || 0
         };
       } catch { /* use built-in defaults */ }
@@ -435,6 +478,7 @@
         webhookUrl: deployDefaults.webhookUrl,
         dropboxFolder: deployDefaults.dropboxFolder,
         companyName: deployDefaults.companyName,
+        emailTo: deployDefaults.emailTo || '',
         deployRevision: deployDefaults.deployRevision || 0,
         _version: CONFIG_VERSION
       };
@@ -475,9 +519,8 @@
       document.getElementById('cfgWebhook').value = config.webhookUrl;
       document.getElementById('cfgDropboxFolder').value = config.dropboxFolder;
       document.getElementById('cfgCompanyName').value = config.companyName;
-      updateUploadBanner();
       renderReportSheet();
-      showToast('已恢復公司預設上傳設定');
+      showToast('已恢復公司預設設定');
     }
 
     let serverUploadStatus = null;
@@ -496,19 +539,6 @@
       }
     }
 
-    function updateUploadBanner() {
-      const el = document.getElementById('uploadTargetBanner');
-      if (!el) return;
-      const folder = config.dropboxFolder || '/REPORT/';
-      const local = isLocalTestMode(getUploadUrl());
-      if (local && hasServerDropbox()) {
-        el.innerHTML = `📁 PDF 上傳至 Dropbox：<strong>${esc(folder)}</strong><br><span style="opacity:.85;font-size:.72rem">經本機 server 直傳 Dropbox 雲端</span>`;
-      } else if (local) {
-        el.innerHTML = `⚠️ <strong>測試模式</strong>：只存電腦 <strong>REPORT/</strong>，<strong>未去 Dropbox</strong><br>請設定 <code>server-config.json</code> 或 Make Webhook`;
-      } else {
-        el.innerHTML = `📁 PDF 上傳至 Dropbox：<strong>${esc(folder)}</strong>`;
-      }
-    }
     let isDrawing = false, hasSignature = false, lastX = 0, lastY = 0, sigPreviewTimer = null;
     let cachedSigDataUrl = '';
     const canvas = document.getElementById('signatureCanvas');
@@ -535,7 +565,6 @@
       config.deployRevision = config.deployRevision ?? base.deployRevision;
       config._version = CONFIG_VERSION;
       localStorage.setItem('cin_report_config', JSON.stringify(config));
-      updateUploadBanner();
     }
     function todayISO() {
       const d = new Date();
@@ -600,7 +629,7 @@
           const lg = f.large ? ' class="rpt-field-lg"' : '';
           return `<div class="field"><label>${esc(f.label)}</label><textarea data-fid="${f.id}" rows="${rows}"${lg}${req}></textarea></div>`;
         }
-        const isToday = f.type === 'date' && (f.id === 'dateOfCall' || f.id === 'dateCallCompleted');
+        const isToday = f.type === 'date' && (f.id === 'dateOfCall' || f.id === 'dateOfServiceAttend');
         const val = isToday ? ` value="${todayISO()}"` : '';
         const now = new Date();
         const timeNow = f.type === 'time' && f.id === 'startTime'
@@ -699,7 +728,6 @@
           <div class="rpt-header-mid"><div class="rpt-h1">SERVICE REPORT</div></div>
           <div class="rpt-jobno"><span class="rpt-jobno-lbl">Your PO No:</span><span class="rpt-jobno-val">${esc(d.jobNumber)}</span></div>
         </div>
-        <div class="rpt-section">Detail</div>
         <table class="rpt-tbl">${RPT_COLS}
           <tr><td class="rpt-lbl">Customer:</td><td colspan="3" class="rpt-val">${esc(d.customerName)}</td></tr>
           <tr><td class="rpt-lbl">Site Address:</td><td colspan="3" class="rpt-val">${esc(d.siteAddress)}</td></tr>
@@ -812,30 +840,28 @@
         </div>
         <table class="rpt-tbl">${RPT_COLS}
           <tr><td class="rpt-lbl">Customer/客戶:</td><td colspan="3" class="rpt-val">${esc(d.customerName)}</td></tr>
-          <tr><td class="rpt-lbl">Site Address/地址:</td><td colspan="3" class="rpt-val">${esc(d.siteAddress)}</td></tr>
+          <tr><td class="rpt-lbl">Site Address/叫修地址:</td><td colspan="3" class="rpt-val">${esc(d.siteAddress)}</td></tr>
           <tr><td class="rpt-lbl">Service Type/服務型態:</td><td colspan="3" class="rpt-val">${stGrid}</td></tr>
         </table>
         <div class="rpt-section">Service Request</div>
         <table class="rpt-tbl">${RPT_COLS}
           <tr>
-            <td class="rpt-lbl">Date of call/日期:</td><td class="rpt-val rpt-date">${esc(d.dateOfCall)}</td>
+            <td class="rpt-lbl">Date of service request/叫修請求日期:</td><td class="rpt-val rpt-date">${esc(d.dateOfCall)}</td>
+            <td class="rpt-lbl">Date of Service Attend/前往叫修日期:</td><td class="rpt-val rpt-date">${esc(d.dateOfServiceAttend)}</td>
+          </tr>
+          <tr>
+            <td class="rpt-lbl">Requested by/要求者:</td><td class="rpt-val">${esc(d.requestBy)}</td>
             <td class="rpt-lbl">Start Time/開始時間:</td><td class="rpt-val rpt-date">${esc(d.startTime)}</td>
           </tr>
           <tr>
-            <td class="rpt-lbl">Request by/要求者:</td><td class="rpt-val">${esc(d.requestBy)}</td>
             <td class="rpt-lbl">Completion Time/完成時間:</td><td class="rpt-val rpt-date">${esc(d.completionTime)}</td>
+            <td class="rpt-lbl">Duration (Hours)/所用時間:</td><td class="rpt-val rpt-single">${dur}</td>
           </tr>
-          <tr>
-            <td class="rpt-lbl">Duration (Hours)/所用時間:</td>
-            <td class="rpt-val rpt-single">${dur}</td>
-            <td class="rpt-lbl"></td><td class="rpt-val"></td>
-          </tr>
-          <tr><td class="rpt-lbl">Faults/問題:</td><td colspan="3" class="rpt-val rpt-area">${esc(d.faults)}</td></tr>
-          <tr><td class="rpt-lbl">Problem/實際問題:</td><td colspan="3" class="rpt-val rpt-area-lg">${esc(d.problem)}</td></tr>
+          <tr><td class="rpt-lbl">Issues/問題:</td><td colspan="3" class="rpt-val rpt-area">${esc(d.issues)}</td></tr>
         </table>
         <div class="rpt-section">Actual Work</div>
         <table class="rpt-tbl">${RPT_COLS}
-          <tr><td class="rpt-lbl">Action Taken/解決方案:</td><td colspan="3" class="rpt-val rpt-area-lg">${esc(d.actionTaken)}</td></tr>
+          <tr><td class="rpt-lbl">Faults Identified and Actions Taken/問題原因跟解決方案:</td><td colspan="3" class="rpt-val rpt-area-action">${esc(d.actionTaken)}</td></tr>
         </table>
         <div class="rpt-section">Follow Up</div>
         <table class="rpt-tbl">${RPT_COLS}
@@ -848,27 +874,19 @@
         </table>
         <table class="rpt-tbl">${RPT_COLS}
           <tr class="rpt-dual-hdr">
-            <td colspan="2">${chk(hasParts)} Parts Replacement/更換零件:</td>
-            <td colspan="2">${chk(hasLoan)} Loan Equipment/借用零件</td>
+            <td colspan="2">${chk(hasParts)} Equipment Replacement/更換設備:</td>
+            <td colspan="2">${chk(hasLoan)} Loan Equipment/借用設備</td>
           </tr>
           <tr>
-            <td class="rpt-lbl-sm">Model #/型號:</td><td class="rpt-val">${esc(d.partsModel)}</td>
-            <td class="rpt-lbl-sm">Model #:</td><td class="rpt-val">${esc(d.loanModel)}</td>
+            <td class="rpt-lbl-sm">Model # and Description/型號跟描述:</td><td class="rpt-val rpt-area-sm">${esc(d.partsModel)}</td>
+            <td class="rpt-lbl-sm">Model # and Description:</td><td class="rpt-val rpt-area-sm">${esc(d.loanModel)}</td>
           </tr>
           <tr>
-            <td class="rpt-lbl-sm">Manufacturer/原廠:</td><td class="rpt-val">${esc(d.partsManufacturer)}</td>
-            <td class="rpt-lbl-sm">Manufacturer:</td><td class="rpt-val">${esc(d.loanManufacturer)}</td>
+            <td class="rpt-lbl-sm">Qty/數量:</td><td class="rpt-val">${esc(d.partsQty)}</td>
+            <td class="rpt-lbl-sm">Qty/數量:</td><td class="rpt-val">${esc(d.loanQty)}</td>
           </tr>
           <tr>
-            <td class="rpt-lbl-sm">Description/明細:</td><td class="rpt-val rpt-area-sm">${esc(d.partsDescription)}</td>
-            <td class="rpt-lbl-sm">Description:</td><td class="rpt-val rpt-area-sm">${esc(d.loanDescription)}</td>
-          </tr>
-          <tr>
-            <td class="rpt-lbl-sm">Qty:</td><td class="rpt-val">${esc(d.partsQty)}</td>
-            <td class="rpt-lbl-sm">Qty:</td><td class="rpt-val">${esc(d.loanQty)}</td>
-          </tr>
-          <tr>
-            <td class="rpt-lbl">${chk(hasQuote)} Quotation#/報價</td>
+            <td class="rpt-lbl">${chk(hasQuote)} Quotation/需要報價</td>
             <td class="rpt-val">${esc(d.quotation)}</td>
             <td class="rpt-lbl"></td><td class="rpt-val"></td>
           </tr>
@@ -886,11 +904,8 @@
             <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot">${sigInner}</div></td>
           </tr>
           <tr>
-            <td class="rpt-lbl">Airlink Representative<br>工程師:</td><td class="rpt-val">${esc(d.engineerName)}</td>
+            <td class="rpt-lbl">Airlink Representative<br>凌科代表:</td><td class="rpt-val">${esc(d.engineerName)}</td>
             <td class="rpt-lbl">Customer's Representative:</td><td class="rpt-val">${esc(d.customerRepresentative)}</td>
-          </tr>
-          <tr>
-            <td class="rpt-lbl">Date Call Completed<br>完成日:</td><td colspan="3" class="rpt-val rpt-date">${esc(d.dateCallCompleted)}</td>
           </tr>
           <tr>
             <td class="rpt-lbl">Remarks:</td><td colspan="3" class="rpt-val rpt-remarks">${esc(d.remarks)}</td>
@@ -1028,10 +1043,9 @@
         document.getElementById(id).addEventListener('change', () => { saveConfig(); renderReportSheet(); });
       });
       document.getElementById('resetConfigBtn').addEventListener('click', resetToDeployDefaults);
-      updateUploadBanner();
       if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
         const hint = document.getElementById('installHint');
-        hint.textContent = `📲 手機測試：Webhook 已自動用 ${getUploadUrl()} 上傳`;
+        hint.textContent = '📲 手機：按 Email → 開啟 PDF → 分享 → 選「郵件」寄出';
         hint.classList.add('visible');
       }
     }
@@ -1139,7 +1153,7 @@
 
     function sanitizeFilename(str) { return (str || 'Unknown').trim().replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_'); }
     function buildFilename(d) {
-      const date = (d.dateCallCompleted || d.dateOfCall || todayISO()).replace(/-/g, '');
+      const date = (d.dateOfServiceAttend || d.dateOfCall || todayISO()).replace(/-/g, '');
       const tag = getTemplateDef().fileTag;
       return `${date}_${sanitizeFilename(d.customerName)}_${sanitizeFilename(d.jobNumber)}_${tag}.pdf`;
     }
@@ -1263,18 +1277,77 @@
       return buildPdfBlobFromShot(shot);
     }
 
-    async function savePhoneBackup(shot, pdfFilename) {
-      const imgName = pdfFilename.replace(/\.pdf$/i, '') + '_backup.jpg';
-      const blob = await new Promise((resolve, reject) => {
+    async function shotToJpegBlob(shot) {
+      return new Promise((resolve, reject) => {
         shot.toBlob((b) => (b ? resolve(b) : reject(new Error('無法產生備份圖片'))), 'image/jpeg', 0.96);
       });
+    }
+
+    function isMobileDevice() {
+      return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    function isIOS() {
+      return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    function canSharePdfFiles() {
+      if (!navigator.share || !window.isSecureContext) return false;
+      if (!navigator.canShare) return false;
+      try {
+        const probe = new File(['%PDF'], 'probe.pdf', { type: 'application/pdf' });
+        return navigator.canShare({ files: [probe] });
+      } catch {
+        return false;
+      }
+    }
+
+    let mobileEmailBlobUrl = null;
+
+    function hideMobileEmailHelper() {
+      const panel = document.getElementById('mobileEmailPanel');
+      panel.hidden = true;
+      panel.setAttribute('aria-hidden', 'true');
+      if (mobileEmailBlobUrl) {
+        const url = mobileEmailBlobUrl;
+        mobileEmailBlobUrl = null;
+        setTimeout(() => URL.revokeObjectURL(url), 300000);
+      }
+    }
+
+    function showMobileEmailHelper(pdfBlob, filename) {
+      hideMobileEmailHelper();
+      mobileEmailBlobUrl = URL.createObjectURL(pdfBlob);
+      const pdfLink = document.getElementById('mobilePdfOpen');
+      pdfLink.href = mobileEmailBlobUrl;
+      pdfLink.textContent = `開啟 PDF（${filename}）`;
+      if (!isIOS()) pdfLink.setAttribute('download', filename);
+      else pdfLink.removeAttribute('download');
+      const panel = document.getElementById('mobileEmailPanel');
+      panel.hidden = false;
+      panel.setAttribute('aria-hidden', 'false');
+      panel.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    }
+
+    function initMobileEmailHelper() {
+      document.getElementById('mobileEmailClose').addEventListener('click', hideMobileEmailHelper);
+      document.getElementById('mobileEmailBackdrop').addEventListener('click', hideMobileEmailHelper);
+    }
+
+    async function savePhoneBackup(shot, pdfFilename) {
+      const imgName = pdfFilename.replace(/\.pdf$/i, '') + '_backup.jpg';
+      const blob = await shotToJpegBlob(shot);
       const file = new File([blob], imgName, { type: 'image/jpeg' });
 
       if (navigator.share) {
         try {
-          const canShareFiles = !navigator.canShare || navigator.canShare({ files: [file] });
-          if (canShareFiles) {
-            await navigator.share({ files: [file], title: 'Service Report Backup' });
+          const shareData = {
+            files: [file],
+            title: 'Service Report Photo',
+            text: '儲存到相簿：iOS 選「儲存圖片」· Android 選「儲存」或 Photos'
+          };
+          if (!navigator.canShare || navigator.canShare(shareData)) {
+            await navigator.share(shareData);
             return 'share';
           }
         } catch (e) {
@@ -1282,14 +1355,7 @@
         }
       }
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = imgName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 15000);
+      downloadBlob(blob, imgName);
       return 'download';
     }
 
@@ -1319,74 +1385,142 @@
       return new Blob([parts.join('')], { type: 'application/pdf' });
     }
 
-    async function uploadReport() {
+    function buildEmailContent(d, filename, forMailto = false) {
+      const jobLabel = activeTemplate === 'sg' ? 'PO No' : 'Job No';
+      const subject = `Service Report - ${d.customerName || ''} - ${d.jobNumber || ''}`.replace(/\s+/g, ' ').trim();
+      const lines = [
+        'Please find attached Service Report.',
+        '',
+        `Customer: ${d.customerName || ''}`,
+        `${jobLabel}: ${d.jobNumber || ''}`,
+        `Site Address: ${d.siteAddress || ''}`
+      ];
+      if (activeTemplate === 'tw') {
+        lines.push(
+          `Date of service request: ${d.dateOfCall || ''}`,
+          `Date of Service Attend: ${d.dateOfServiceAttend || ''}`,
+          `Engineer: ${d.engineerName || ''}`
+        );
+      } else {
+        lines.push(
+          `Date of call: ${d.dateOfCall || ''}`,
+          `Engineer: ${d.engineerName || ''}`
+        );
+      }
+      if (forMailto) {
+        lines.push('', `Please attach the downloaded PDF file: ${filename}`);
+      }
+      return { subject, body: lines.join('\n') };
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+    }
+
+    function openEmailClient(to, subject, body) {
+      const qs = [];
+      if (subject) qs.push('subject=' + encodeURIComponent(subject));
+      if (body) qs.push('body=' + encodeURIComponent(body));
+      const toPart = (to || '').trim();
+      window.location.href = `mailto:${toPart}${qs.length ? '?' + qs.join('&') : ''}`;
+    }
+
+    async function sharePdfByEmail(pdfBlob, filename, subject) {
+      if (!navigator.share) return null;
+      const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+      const attempts = [
+        { files: [file] },
+        { files: [file], title: subject },
+        { files: [file], title: subject, text: 'Service Report' }
+      ];
+      for (const shareData of attempts) {
+        try {
+          if (navigator.canShare && !navigator.canShare(shareData)) continue;
+          await navigator.share(shareData);
+          return 'share';
+        } catch (e) {
+          if (e.name === 'AbortError') throw e;
+        }
+      }
+      return null;
+    }
+
+    async function mobileEmailFallback(pdfBlob, filename) {
+      showMobileEmailHelper(pdfBlob, filename);
+      showToast('請點按下方「開啟 PDF」→ 分享 → 郵件', 'success', 8000);
+    }
+
+    async function sendReportViaEmail() {
       const d = getFieldValues();
       const err = validateForm(d);
       if (err) { showToast(err, 'error'); return; }
       if (!cachedSigDataUrl && hasSignature) refreshSignatureCache();
       saveConfig();
       const filename = buildFilename(d);
+      const { subject } = buildEmailContent(d, filename);
+      const mailBody = buildEmailContent(d, filename, true).body;
+      const to = (config.emailTo || '').trim();
       const btn = document.getElementById('uploadBtn');
-      const uploadUrl = getUploadUrl();
-      const isLocal = isLocalTestMode(uploadUrl);
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>正在生成 PDF…';
       showToast('⏳ 正在生成 PDF，請稍候…');
       try {
         const shot = await captureReportShot();
         const pdfBlob = await buildPdfBlobFromShot(shot);
-        btn.innerHTML = '<span class="spinner"></span>正在上傳…';
-        showToast(isLocal && !hasServerDropbox()
-          ? '⏳ 測試模式：上傳至電腦 REPORT/（未去 Dropbox）…'
-          : `⏳ 正在上傳至 Dropbox ${config.dropboxFolder}…`);
-        const fd = new FormData();
-        fd.append('file', pdfBlob, filename);
-        fd.append('filename', filename);
-        fd.append('dropboxFolder', config.dropboxFolder);
-        fd.append('formType', getTemplateDef().formType);
-        fd.append('customerName', d.customerName || '');
-        fd.append('jobNumber', d.jobNumber || '');
-        fd.append('jsonPayload', JSON.stringify(d));
-        const res = await fetch(uploadUrl, { method: 'POST', body: fd });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        btn.innerHTML = '<span class="spinner"></span>正在儲存手機備份…';
-        const backup = await savePhoneBackup(shot, filename);
-
-        if (isLocal) {
-          const info = await res.json().catch(() => ({}));
-          if (info.dropbox?.ok) {
-            let msg = `🚀 已上傳至 Dropbox\n${info.dropbox.path || config.dropboxFolder + filename}`;
-            if (backup === 'share') msg += '\n📷 請在分享畫面選「儲存圖片」做備份';
-            else if (backup === 'download') msg += '\n📷 備份圖片已下載至手機';
-            showToast(msg, 'success', 7000);
-          } else if (info.dropbox?.skipped) {
-            let msg = `🚀 已存電腦：${info.filename || filename}\n⚠️ Dropbox 未設定 — 請編輯 server-config.json 放入 Token`;
-            if (backup === 'share') msg += '\n📷 請在分享畫面選「儲存圖片」做備份';
-            else if (backup === 'download') msg += '\n📷 備份圖片已下載至手機';
-            showToast(msg, 'success', 7000);
-          } else if (info.dropbox && info.dropbox.ok === false) {
-            let msg = `⚠️ 電腦已存檔，但 Dropbox 失敗\n${(info.dropbox.error || '').slice(0, 120)}`;
-            showToast(msg, 'error', 8000);
-          } else {
-            let msg = `🚀 測試上傳成功：${info.filename || filename}\n⚠️ 檔案在電腦 REPORT/，未上傳 Dropbox`;
-            if (backup === 'share') msg += '\n📷 請在分享畫面選「儲存圖片」做備份';
-            else if (backup === 'download') msg += '\n📷 備份圖片已下載至手機';
-            showToast(msg, 'success', 7000);
-          }
-        } else {
-          let msg = `🚀 已上傳至 Dropbox ${config.dropboxFolder}`;
-          if (backup === 'share') msg += '\n📷 請在分享畫面選「儲存圖片」做備份';
-          else if (backup === 'download') msg += '\n📷 備份圖片已下載至手機';
-          else if (backup === 'cancelled') msg += '\n（已取消手機備份）';
-          showToast(msg, 'success', 7000);
+        btn.innerHTML = '<span class="spinner"></span>正在準備 Email…';
+        const shareOk = canSharePdfFiles();
+        if (isMobileDevice() && !shareOk) {
+          await mobileEmailFallback(pdfBlob, filename);
+          return;
         }
+        if (shareOk) showToast('📧 分享畫面選擇「郵件」或其他郵件 App');
+        try {
+          const shared = shareOk ? await sharePdfByEmail(pdfBlob, filename, subject) : null;
+          if (shared) {
+            if (isMobileDevice()) {
+              showToast('📧 選擇「郵件」，確認有 PDF 附件後寄出', 'success', 5000);
+            } else {
+              showToast('📧 分享畫面選擇 Outlook / Mail，PDF 會作為附件', 'success', 7000);
+            }
+            return;
+          }
+        } catch (e) {
+          if (e.name === 'AbortError') {
+            if (isMobileDevice()) {
+              await mobileEmailFallback(pdfBlob, filename);
+              showToast('已取消分享 — 請依下方步驟手動寄送', 'error', 5000);
+            } else {
+              showToast('已取消', 'error', 3000);
+            }
+            return;
+          }
+        }
+        if (isMobileDevice()) {
+          await mobileEmailFallback(pdfBlob, filename);
+          return;
+        }
+        downloadBlob(pdfBlob, filename);
+        setTimeout(() => openEmailClient(to, subject, mailBody), 400);
+        showToast(
+          to
+            ? `📧 已開啟 Email（${to}）\n📎 PDF 已下載 — 請按 📎 附加檔案後寄出`
+            : '📧 已開啟 Email\n📎 PDF 已下載 — 請手動附加 PDF 後寄出',
+          'success',
+          10000
+        );
       } catch (e) {
         console.error(e);
-        showToast('上傳失敗：' + (e.message || '請檢查 Webhook / Wi-Fi'), 'error');
+        showToast('Email 失敗：' + (e.message || '請重試'), 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = '✅ 一鍵上傳報告 / UPLOAD REPORT';
+        btn.textContent = '📧 Email 報告 / SEND VIA EMAIL';
       }
     }
 
@@ -1394,8 +1528,8 @@
       try {
         await loadDeployConfig();
         config = loadConfig();
-        await fetchUploadStatus();
-        document.getElementById('uploadBtn').addEventListener('click', uploadReport);
+        document.getElementById('uploadBtn').addEventListener('click', sendReportViaEmail);
+        initMobileEmailHelper();
         document.getElementById('configToggle').addEventListener('click', () => document.getElementById('configPanel').classList.toggle('open'));
         window.addEventListener('resize', onViewportChange);
         if (window.visualViewport) {

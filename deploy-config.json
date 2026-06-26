@@ -1,5 +1,6 @@
 {
-  "configRevision": 2,
+  "configRevision": 3,
+  "emailTo": "service@airlink-asia.com",
   "webhookUrl": "/upload",
   "dropboxFolder": "/Taiwan/Service Reports/",
   "companyName": "Airlink Security Technologies Ltd."
