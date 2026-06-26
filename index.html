@@ -174,6 +174,7 @@
     .rpt-st-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:10px;row-gap:4px;align-items:center}
     .rpt-st-item{font-size:10.5px;line-height:1.35;color:#000}
     .rpt-area-sm{height:26px;max-height:26px}
+    .rpt-area-loan{height:56px;max-height:56px;vertical-align:top;white-space:pre-wrap;word-break:break-word}
     .rpt-area{height:38px;max-height:38px}
     .rpt-area-lg{height:50px;max-height:50px}
     .rpt-area-faults{height:72px;max-height:72px;vertical-align:top}
@@ -195,7 +196,8 @@
     .rpt-dual-hdr td{font-weight:700;background:#f0f0f0;text-align:center;font-size:10.5px;padding:3px}
     #companyReportSheetCapture .rpt-jobno-val{font-size:15px}
     #companyReportSheetCapture .rpt-area-faults,
-    #companyReportSheetCapture .rpt-area-action{line-height:1.35!important}
+    #companyReportSheetCapture .rpt-area-action,
+    #companyReportSheetCapture .rpt-area-loan{line-height:1.35!important}
   </style>
 </head>
 <body>
@@ -319,7 +321,7 @@
       { id: 'followUpSections', label: 'Follow Up 項目（打勾適用）', type: 'checks', items: FOLLOW_UP_SECTIONS_TW },
       { id: 'partsModel', label: 'Equipment Model # and Description/更換設備型號跟描述', type: 'textarea', rows: 2 },
       { id: 'partsQty', label: 'Equipment Qty/數量', type: 'text' },
-      { id: 'loanModel', label: 'Loan Model # and Description/借用設備型號跟描述', type: 'textarea', rows: 2 },
+      { id: 'loanModel', label: 'Loan Model # and Description/借用設備型號跟描述', type: 'textarea', rows: 4, large: true },
       { id: 'loanQty', label: 'Loan Qty/數量', type: 'text' },
       { id: 'quotation', label: 'Quotation/需要報價內容', type: 'text' },
       { id: 'others', label: 'Others/其他', type: 'textarea', rows: 3, large: true },
@@ -350,7 +352,7 @@
       { id: 'partsQty', label: 'Parts Qty', type: 'text' },
       { id: 'loanModel', label: 'Loan Model #', type: 'text' },
       { id: 'loanManufacturer', label: 'Loan Manufacturer', type: 'text' },
-      { id: 'loanDescription', label: 'Loan Description', type: 'textarea', rows: 2 },
+      { id: 'loanDescription', label: 'Loan Description', type: 'textarea', rows: 4, large: true },
       { id: 'loanQty', label: 'Loan Qty', type: 'text' },
       { id: 'quotation', label: 'Quotation', type: 'textarea', rows: 2 },
       { id: 'others', label: 'Others', type: 'textarea', rows: 4, large: true },
@@ -778,7 +780,7 @@
           </tr>
           <tr>
             <td class="rpt-lbl-sm">Description:</td><td class="rpt-val rpt-area-sm">${esc(d.partsDescription)}</td>
-            <td class="rpt-lbl-sm">Description:</td><td class="rpt-val rpt-area-sm">${esc(d.loanDescription)}</td>
+            <td class="rpt-lbl-sm">Description:</td><td class="rpt-val rpt-area-loan">${esc(d.loanDescription)}</td>
           </tr>
           <tr>
             <td class="rpt-lbl-sm">Qty:</td><td class="rpt-val">${esc(d.partsQty)}</td>
@@ -879,7 +881,7 @@
           </tr>
           <tr>
             <td class="rpt-lbl-sm">Model # and Description/型號跟描述:</td><td class="rpt-val rpt-area-sm">${esc(d.partsModel)}</td>
-            <td class="rpt-lbl-sm">Model # and Description:</td><td class="rpt-val rpt-area-sm">${esc(d.loanModel)}</td>
+            <td class="rpt-lbl-sm">Model # and Description:</td><td class="rpt-val rpt-area-loan">${esc(d.loanModel)}</td>
           </tr>
           <tr>
             <td class="rpt-lbl-sm">Qty/數量:</td><td class="rpt-val">${esc(d.partsQty)}</td>
@@ -1224,12 +1226,12 @@
     function captureScale() {
       const isMobile = window.innerWidth < 768;
       const sheetH = Math.max(cachedSheetH || measureSheetHeight(), 400);
-      const targetDpi = isMobile ? 340 : 400;
+      const targetDpi = isMobile ? 200 : 220;
       let scale = targetDpi / 96;
-      const maxPixels = isMobile ? 18e6 : 32e6;
+      const maxPixels = isMobile ? 10e6 : 16e6;
       const pixels = SHEET_W * sheetH * scale * scale;
       if (pixels > maxPixels) scale = Math.sqrt(maxPixels / (SHEET_W * sheetH));
-      return Math.max(3, Math.min(scale, isMobile ? 4.25 : 5));
+      return Math.max(2, Math.min(scale, isMobile ? 2.75 : 3));
     }
 
     function prepareCaptureSheetForShot() {
@@ -1304,10 +1306,11 @@
     }
 
     async function buildPdfBlobFromShot(shot) {
-      const png = shot.toDataURL('image/png');
+      const JPEG_QUALITY = 0.85;
+      const jpeg = shot.toDataURL('image/jpeg', JPEG_QUALITY);
       const JsPDF = window.jspdf?.jsPDF;
       if (JsPDF) {
-        const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: false });
+        const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
         const pageW = 210;
         const pageH = 297;
         const imgH = shot.height * pageW / shot.width;
@@ -1315,13 +1318,12 @@
         let remaining = imgH;
         while (remaining > 0) {
           if (y > 0) pdf.addPage();
-          pdf.addImage(png, 'PNG', 0, -y, pageW, imgH, undefined, 'NONE');
+          pdf.addImage(jpeg, 'JPEG', 0, -y, pageW, imgH, undefined, 'FAST');
           y += pageH;
           remaining -= pageH;
         }
         return pdf.output('blob');
       }
-      const jpeg = shot.toDataURL('image/jpeg', 0.96);
       return canvasToPdfBlob(shot, jpeg);
     }
 
