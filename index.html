@@ -924,8 +924,38 @@
         : buildServiceReportHTML_TW(d, sig);
     }
 
+    function canvasHasInk() {
+      if (!canvas.width || !canvas.height) return false;
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      for (let i = 0; i < data.length; i += 16) {
+        const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+        if (a > 8 && (r < 245 || g < 245 || b < 245)) return true;
+      }
+      return false;
+    }
+
+    function paintSignatureImage(img) {
+      const w = canvas.parentElement.clientWidth;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, 180);
+      ctx.drawImage(img, 0, 0, w, 180);
+    }
+
+    function restoreCanvasFromCache() {
+      if (!cachedSigDataUrl || !hasSignature) return false;
+      const img = new Image();
+      img.src = cachedSigDataUrl;
+      if (img.complete) {
+        paintSignatureImage(img);
+        return true;
+      }
+      img.onload = () => paintSignatureImage(img);
+      return true;
+    }
+
     function getSignatureDataUrl() {
       if (!hasSignature) return '';
+      if (!canvasHasInk() && cachedSigDataUrl) return cachedSigDataUrl;
       const displayW = canvas.parentElement?.clientWidth || 400;
       const OUT_W = Math.round(Math.min(520, Math.max(400, displayW * 1.25)));
       const OUT_H = Math.round(180 * (OUT_W / displayW));
@@ -944,7 +974,12 @@
     }
 
     function refreshSignatureCache() {
-      cachedSigDataUrl = hasSignature ? getSignatureDataUrl() : '';
+      if (!hasSignature) {
+        cachedSigDataUrl = '';
+        return;
+      }
+      if (canvasHasInk()) cachedSigDataUrl = getSignatureDataUrl();
+      else if (!cachedSigDataUrl) cachedSigDataUrl = getSignatureDataUrl();
     }
 
     function waitForImages(root) {
@@ -960,9 +995,9 @@
 
     async function ensureCaptureSignature() {
       if (!hasSignature) return;
-      refreshSignatureCache();
-      const sig = cachedSigDataUrl;
+      const sig = cachedSigDataUrl || getSignatureDataUrl();
       if (!sig) return;
+      cachedSigDataUrl = sig;
       const html = `<img src="${sig}" alt="sig" class="rpt-capture-sig">`;
       captureSheet.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
       previewSheet.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
@@ -970,8 +1005,9 @@
     }
 
     function updateSignaturePreview() {
-      refreshSignatureCache();
-      const html = cachedSigDataUrl ? `<img src="${cachedSigDataUrl}" alt="sig" class="rpt-capture-sig">` : '';
+      const sig = cachedSigDataUrl || (hasSignature ? getSignatureDataUrl() : '');
+      if (sig) cachedSigDataUrl = sig;
+      const html = sig ? `<img src="${sig}" alt="sig" class="rpt-capture-sig">` : '';
       document.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
     }
 
@@ -1053,15 +1089,32 @@
     function resizeCanvas() {
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
       const w = canvas.parentElement.clientWidth;
-      canvas.width = w * ratio; canvas.height = 180 * ratio;
-      canvas.style.width = w + 'px'; canvas.style.height = '180px';
+      let snapshot = null;
+      if (hasSignature && canvas.width > 0 && canvas.height > 0 && canvasHasInk()) {
+        snapshot = document.createElement('canvas');
+        snapshot.width = canvas.width;
+        snapshot.height = canvas.height;
+        snapshot.getContext('2d').drawImage(canvas, 0, 0);
+      }
+      canvas.width = w * ratio;
+      canvas.height = 180 * ratio;
+      canvas.style.width = w + 'px';
+      canvas.style.height = '180px';
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.strokeStyle = '#111827';
       ctx.fillStyle = '#111827';
       ctx.lineWidth = /Android|iPhone|iPad/i.test(navigator.userAgent) ? 3.2 : 2.6;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      if (!hasSignature) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, 180); ctx.fillStyle = '#111827'; }
+      if (snapshot) {
+        ctx.drawImage(snapshot, 0, 0, canvas.width, canvas.height);
+      } else if (hasSignature && cachedSigDataUrl) {
+        restoreCanvasFromCache();
+      } else if (!hasSignature) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, w, 180);
+        ctx.fillStyle = '#111827';
+      }
     }
 
     function getPosFromClient(clientX, clientY) {
