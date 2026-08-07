@@ -60,7 +60,7 @@
     .check-item input{width:18px;height:18px;margin-top:2px;flex-shrink:0}
     .check-item span{line-height:1.3}
     .signature-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;touch-action:none}
-    #signatureCanvas{display:block;width:100%;height:180px}
+    .signature-wrap canvas{display:block;width:100%;height:180px}
     .signature-actions{display:flex;justify-content:flex-end;margin-top:10px}
     .btn-clear,.btn-secondary,.config-toggle{padding:8px 16px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.82rem;cursor:pointer}
     .btn-secondary{width:100%;padding:10px;margin-top:4px;border-style:dashed}
@@ -203,7 +203,7 @@
 <body>
   <header class="app-header">
     <h1>Airlink Service Report</h1>
-    <p>填寫 Service Report → 客戶簽名 → Email 傳送</p>
+    <p>填寫 Service Report → 凌科簽名 → 客戶簽名 → Email 傳送</p>
   </header>
   <main>
     <div id="installHint" class="install-hint">📲 加入主畫面後可一鍵開啟、隱藏網址列</div>
@@ -238,7 +238,12 @@
         <div class="preview-wrap"><div class="preview-viewport" id="previewViewport"><div class="preview-scale" id="previewScale"><div id="companyReportSheet"></div></div></div></div>
       </section>
       <section class="card">
-        <h2 class="card-title">Step 3 · 客戶手機簽名</h2>
+        <h2 class="card-title">Step 3 · Signature (Airlink) 簽署</h2>
+        <div class="signature-wrap"><canvas id="airlinkSignatureCanvas"></canvas></div>
+        <div class="signature-actions"><button type="button" class="btn-clear" id="clearAirlinkSignatureBtn">清除簽名 Clear</button></div>
+      </section>
+      <section class="card">
+        <h2 class="card-title">Step 4 · 客戶手機簽名</h2>
         <div class="signature-wrap"><canvas id="signatureCanvas"></canvas></div>
         <div class="signature-actions"><button type="button" class="btn-clear" id="clearSignatureBtn">清除簽名 Clear</button></div>
       </section>
@@ -541,13 +546,38 @@
       }
     }
 
-    let isDrawing = false, hasSignature = false, lastX = 0, lastY = 0, sigPreviewTimer = null;
-    let cachedSigDataUrl = '';
-    const canvas = document.getElementById('signatureCanvas');
-    const ctx = canvas.getContext('2d');
     const previewSheet = document.getElementById('companyReportSheet');
     const captureSheet = document.getElementById('companyReportSheetCapture');
     const formFieldsEl = document.getElementById('formFields');
+
+    function createSigPad(canvasId, clearBtnId, key) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const pad = {
+        key,
+        canvas,
+        ctx,
+        isDrawing: false,
+        hasSignature: false,
+        lastX: 0,
+        lastY: 0,
+        cachedDataUrl: ''
+      };
+      document.getElementById(clearBtnId).addEventListener('click', () => {
+        pad.hasSignature = false;
+        pad.cachedDataUrl = '';
+        pad.ctx.fillStyle = '#fff';
+        pad.ctx.fillRect(0, 0, pad.canvas.parentElement.clientWidth, 180);
+        renderReportSheet(true);
+      });
+      return pad;
+    }
+
+    const sigPads = {
+      airlink: createSigPad('airlinkSignatureCanvas', 'clearAirlinkSignatureBtn', 'airlink'),
+      customer: createSigPad('signatureCanvas', 'clearSignatureBtn', 'customer')
+    };
+    const sigPadList = Object.values(sigPads);
 
     function getUploadUrl() {
       const raw = (config.webhookUrl || '/upload').trim();
@@ -714,7 +744,7 @@
       </div>`;
     }
 
-    function buildServiceReportHTML_SG(d, sig) {
+    function buildServiceReportHTML_SG(d, sigs = {}) {
       const stGrid = buildStGrid(d, 'sg');
       const fuYes = d.followUpRequired === 'yes';
       const fuNo = d.followUpRequired === 'no';
@@ -723,7 +753,8 @@
       const hasLoan = fus.includes('loanEquipment');
       const hasQuote = fus.includes('hasQuotation');
       const hasOthers = fus.includes('hasOthers');
-      const sigInner = sig ? `<img src="${sig}" alt="sig">` : '';
+      const airlinkSigInner = sigs.airlink ? `<img src="${sigs.airlink}" alt="sig">` : '';
+      const customerSigInner = sigs.customer ? `<img src="${sigs.customer}" alt="sig">` : '';
       return `
         <div class="rpt-header">
           <img class="rpt-logo" src="airlink-logo.png" alt="AIRLINK">
@@ -800,9 +831,10 @@
         <p class="rpt-legal">The above work has been carried out to our satisfaction</p>
         <table class="rpt-tbl rpt-sig-table rpt-sig-row">${RPT_COLS}
           <tr>
-            <td class="rpt-lbl">Signature (Airlink):</td><td class="rpt-val">${esc(d.engineerName)}</td>
+            <td class="rpt-lbl">Signature (Airlink):</td>
+            <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot" data-sig="airlink">${airlinkSigInner}</div></td>
             <td class="rpt-lbl">Signature or Company Chop (Customer):</td>
-            <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot">${sigInner}</div></td>
+            <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot" data-sig="customer">${customerSigInner}</div></td>
           </tr>
           <tr>
             <td class="rpt-lbl">Airlink Representative:</td><td class="rpt-val">${esc(d.engineerName)}</td>
@@ -822,7 +854,7 @@
         </div>`;
     }
 
-    function buildServiceReportHTML_TW(d, sig) {
+    function buildServiceReportHTML_TW(d, sigs = {}) {
       const stGrid = buildStGrid(d, 'tw');
       const fuYes = d.followUpRequired === 'yes';
       const fuNo = d.followUpRequired === 'no';
@@ -831,7 +863,8 @@
       const hasLoan = fus.includes('loanEquipment');
       const hasQuote = fus.includes('hasQuotation');
       const hasOthers = fus.includes('hasOthers');
-      const sigInner = sig ? `<img src="${sig}" alt="sig">` : '';
+      const airlinkSigInner = sigs.airlink ? `<img src="${sigs.airlink}" alt="sig">` : '';
+      const customerSigInner = sigs.customer ? `<img src="${sigs.customer}" alt="sig">` : '';
       const dur = d.durationHours ? `${esc(d.durationHours)} hr` : '';
       const company = esc(config.companyName || DEFAULT_CONFIG.companyName);
       return `
@@ -901,9 +934,10 @@
         <p class="rpt-legal">The above work has been carried out to our satisfaction/上述叫修已經符合我們的一般標準</p>
         <table class="rpt-tbl rpt-sig-table rpt-sig-row">${RPT_COLS}
           <tr>
-            <td class="rpt-lbl">Signature (Airlink):</td><td class="rpt-val">${esc(d.engineerName)}</td>
+            <td class="rpt-lbl">Signature (Airlink):</td>
+            <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot" data-sig="airlink">${airlinkSigInner}</div></td>
             <td class="rpt-lbl">Signature or Company Chop (Customer):</td>
-            <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot">${sigInner}</div></td>
+            <td class="rpt-sig-cell"><div class="rpt-sig-box rpt-sig-slot" data-sig="customer">${customerSigInner}</div></td>
           </tr>
           <tr>
             <td class="rpt-lbl">Airlink Representative<br>凌科代表:</td><td class="rpt-val">${esc(d.engineerName)}</td>
@@ -920,13 +954,14 @@
         </div>`;
     }
 
-    function buildServiceReportHTML(d, sig, templateId = activeTemplate) {
+    function buildServiceReportHTML(d, sigs = {}, templateId = activeTemplate) {
       return templateId === 'sg'
-        ? buildServiceReportHTML_SG(d, sig)
-        : buildServiceReportHTML_TW(d, sig);
+        ? buildServiceReportHTML_SG(d, sigs)
+        : buildServiceReportHTML_TW(d, sigs);
     }
 
-    function canvasHasInk() {
+    function canvasHasInk(pad) {
+      const { canvas, ctx } = pad;
       if (!canvas.width || !canvas.height) return false;
       const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       for (let i = 0; i < data.length; i += 16) {
@@ -936,28 +971,29 @@
       return false;
     }
 
-    function paintSignatureImage(img) {
-      const w = canvas.parentElement.clientWidth;
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, w, 180);
-      ctx.drawImage(img, 0, 0, w, 180);
+    function paintSignatureImage(pad, img) {
+      const w = pad.canvas.parentElement.clientWidth;
+      pad.ctx.fillStyle = '#fff';
+      pad.ctx.fillRect(0, 0, w, 180);
+      pad.ctx.drawImage(img, 0, 0, w, 180);
     }
 
-    function restoreCanvasFromCache() {
-      if (!cachedSigDataUrl || !hasSignature) return false;
+    function restoreCanvasFromCache(pad) {
+      if (!pad.cachedDataUrl || !pad.hasSignature) return false;
       const img = new Image();
-      img.src = cachedSigDataUrl;
+      img.src = pad.cachedDataUrl;
       if (img.complete) {
-        paintSignatureImage(img);
+        paintSignatureImage(pad, img);
         return true;
       }
-      img.onload = () => paintSignatureImage(img);
+      img.onload = () => paintSignatureImage(pad, img);
       return true;
     }
 
-    function getSignatureDataUrl() {
-      if (!hasSignature) return '';
-      if (!canvasHasInk() && cachedSigDataUrl) return cachedSigDataUrl;
+    function getSignatureDataUrl(pad) {
+      if (!pad.hasSignature) return '';
+      if (!canvasHasInk(pad) && pad.cachedDataUrl) return pad.cachedDataUrl;
+      const { canvas } = pad;
       const displayW = canvas.parentElement?.clientWidth || 400;
       const OUT_W = Math.round(Math.min(520, Math.max(400, displayW * 1.25)));
       const OUT_H = Math.round(180 * (OUT_W / displayW));
@@ -975,13 +1011,26 @@
       return tmp.toDataURL('image/png');
     }
 
-    function refreshSignatureCache() {
-      if (!hasSignature) {
-        cachedSigDataUrl = '';
+    function refreshSignatureCache(pad) {
+      if (!pad.hasSignature) {
+        pad.cachedDataUrl = '';
         return;
       }
-      if (canvasHasInk()) cachedSigDataUrl = getSignatureDataUrl();
-      else if (!cachedSigDataUrl) cachedSigDataUrl = getSignatureDataUrl();
+      if (canvasHasInk(pad)) pad.cachedDataUrl = getSignatureDataUrl(pad);
+      else if (!pad.cachedDataUrl) pad.cachedDataUrl = getSignatureDataUrl(pad);
+    }
+
+    function getAllSignatureDataUrls() {
+      const out = {};
+      for (const pad of sigPadList) {
+        if (!pad.hasSignature) continue;
+        const sig = pad.cachedDataUrl || getSignatureDataUrl(pad);
+        if (sig) {
+          pad.cachedDataUrl = sig;
+          out[pad.key] = sig;
+        }
+      }
+      return out;
     }
 
     function waitForImages(root) {
@@ -995,22 +1044,27 @@
       }));
     }
 
+    function setSignatureSlotHtml(root, key, html) {
+      root.querySelectorAll(`.rpt-sig-slot[data-sig="${key}"]`).forEach((el) => { el.innerHTML = html; });
+    }
+
     async function ensureCaptureSignature() {
-      if (!hasSignature) return;
-      const sig = cachedSigDataUrl || getSignatureDataUrl();
-      if (!sig) return;
-      cachedSigDataUrl = sig;
-      const html = `<img src="${sig}" alt="sig" class="rpt-capture-sig">`;
-      captureSheet.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
-      previewSheet.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
+      const sigs = getAllSignatureDataUrls();
+      for (const [key, sig] of Object.entries(sigs)) {
+        const html = `<img src="${sig}" alt="sig" class="rpt-capture-sig">`;
+        setSignatureSlotHtml(captureSheet, key, html);
+        setSignatureSlotHtml(previewSheet, key, html);
+      }
       await waitForImages(captureSheet);
     }
 
     function updateSignaturePreview() {
-      const sig = cachedSigDataUrl || (hasSignature ? getSignatureDataUrl() : '');
-      if (sig) cachedSigDataUrl = sig;
-      const html = sig ? `<img src="${sig}" alt="sig" class="rpt-capture-sig">` : '';
-      document.querySelectorAll('.rpt-sig-slot').forEach((el) => { el.innerHTML = html; });
+      const sigs = getAllSignatureDataUrls();
+      document.querySelectorAll('.rpt-sig-slot').forEach((el) => {
+        const key = el.dataset.sig;
+        const sig = sigs[key] || '';
+        el.innerHTML = sig ? `<img src="${sig}" alt="sig" class="rpt-capture-sig">` : '';
+      });
     }
 
     function renderReportSheet(sigOnly = false) {
@@ -1020,8 +1074,7 @@
         return;
       }
       const d = getFieldValues();
-      const sig = hasSignature ? (cachedSigDataUrl || getSignatureDataUrl()) : '';
-      const html = buildServiceReportHTML(d, sig);
+      const html = buildServiceReportHTML(d, getAllSignatureDataUrls());
       previewSheet.innerHTML = html;
       captureSheet.innerHTML = html;
       cachedSheetH = 0;
@@ -1088,11 +1141,12 @@
       }
     }
 
-    function resizeCanvas() {
+    function resizeCanvasPad(pad) {
+      const { canvas, ctx } = pad;
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
       const w = canvas.parentElement.clientWidth;
       let snapshot = null;
-      if (hasSignature && canvas.width > 0 && canvas.height > 0 && canvasHasInk()) {
+      if (pad.hasSignature && canvas.width > 0 && canvas.height > 0 && canvasHasInk(pad)) {
         snapshot = document.createElement('canvas');
         snapshot.width = canvas.width;
         snapshot.height = canvas.height;
@@ -1110,33 +1164,39 @@
       ctx.lineJoin = 'round';
       if (snapshot) {
         ctx.drawImage(snapshot, 0, 0, canvas.width, canvas.height);
-      } else if (hasSignature && cachedSigDataUrl) {
-        restoreCanvasFromCache();
-      } else if (!hasSignature) {
+      } else if (pad.hasSignature && pad.cachedDataUrl) {
+        restoreCanvasFromCache(pad);
+      } else if (!pad.hasSignature) {
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, w, 180);
         ctx.fillStyle = '#111827';
       }
     }
 
-    function getPosFromClient(clientX, clientY) {
-      const r = canvas.getBoundingClientRect();
+    function resizeCanvas() {
+      sigPadList.forEach(resizeCanvasPad);
+    }
+
+    function getPosFromClient(pad, clientX, clientY) {
+      const r = pad.canvas.getBoundingClientRect();
       return { x: clientX - r.left, y: clientY - r.top };
     }
 
-    function getPos(e) {
+    function getPos(pad, e) {
       const t = e.touches ? e.touches[0] : e;
-      return getPosFromClient(t.clientX, t.clientY);
+      return getPosFromClient(pad, t.clientX, t.clientY);
     }
 
-    function plotDot(x, y) {
+    function plotDot(pad, x, y) {
+      const { ctx } = pad;
       ctx.beginPath();
       ctx.arc(x, y, ctx.lineWidth / 2, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    function strokeSeg(x0, y0, x1, y1) {
-      const dist = Math.hypot(x1 - x0, y1 - y1);
+    function strokeSeg(pad, x0, y0, x1, y1) {
+      const { ctx } = pad;
+      const dist = Math.hypot(x1 - x0, y1 - y0);
       if (dist < 0.2) return;
       const step = 0.8;
       const n = Math.max(1, Math.ceil(dist / step));
@@ -1151,60 +1211,54 @@
       ctx.stroke();
     }
 
-    function collectDrawPoints(e) {
-      const r = canvas.getBoundingClientRect();
+    function collectDrawPoints(pad, e) {
       const pts = [];
       if (e.getCoalescedEvents) {
         for (const ev of e.getCoalescedEvents()) {
-          pts.push(getPosFromClient(ev.clientX, ev.clientY));
+          pts.push(getPosFromClient(pad, ev.clientX, ev.clientY));
         }
       }
-      if (!pts.length) pts.push(getPos(e));
+      if (!pts.length) pts.push(getPos(pad, e));
       return pts;
     }
 
-    function startDraw(e) {
-      e.preventDefault();
-      isDrawing = true;
-      hasSignature = true;
-      const p = getPos(e);
-      lastX = p.x;
-      lastY = p.y;
-      plotDot(p.x, p.y);
+    function bindSigPadEvents(pad) {
+      const startDraw = (e) => {
+        e.preventDefault();
+        pad.isDrawing = true;
+        pad.hasSignature = true;
+        const p = getPos(pad, e);
+        pad.lastX = p.x;
+        pad.lastY = p.y;
+        plotDot(pad, p.x, p.y);
+      };
+      const draw = (e) => {
+        if (!pad.isDrawing) return;
+        e.preventDefault();
+        const pts = collectDrawPoints(pad, e);
+        for (const p of pts) {
+          strokeSeg(pad, pad.lastX, pad.lastY, p.x, p.y);
+          pad.lastX = p.x;
+          pad.lastY = p.y;
+        }
+      };
+      const stopDraw = (e) => {
+        if (e) e.preventDefault();
+        if (!pad.isDrawing) return;
+        pad.isDrawing = false;
+        refreshSignatureCache(pad);
+        renderReportSheet(true);
+      };
+      pad.canvas.addEventListener('mousedown', startDraw);
+      pad.canvas.addEventListener('mousemove', draw);
+      pad.canvas.addEventListener('mouseup', stopDraw);
+      pad.canvas.addEventListener('mouseleave', stopDraw);
+      pad.canvas.addEventListener('touchstart', startDraw, { passive: false });
+      pad.canvas.addEventListener('touchmove', draw, { passive: false });
+      pad.canvas.addEventListener('touchend', stopDraw, { passive: false });
     }
 
-    function draw(e) {
-      if (!isDrawing) return;
-      e.preventDefault();
-      const pts = collectDrawPoints(e);
-      for (const p of pts) {
-        strokeSeg(lastX, lastY, p.x, p.y);
-        lastX = p.x;
-        lastY = p.y;
-      }
-    }
-
-    function stopDraw(e) {
-      if (e) e.preventDefault();
-      if (!isDrawing) return;
-      isDrawing = false;
-      clearTimeout(sigPreviewTimer);
-      refreshSignatureCache();
-      renderReportSheet(true);
-    }
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDraw);
-    canvas.addEventListener('mouseleave', stopDraw);
-    canvas.addEventListener('touchstart', startDraw, { passive: false });
-    canvas.addEventListener('touchmove', draw, { passive: false });
-    canvas.addEventListener('touchend', stopDraw, { passive: false });
-    document.getElementById('clearSignatureBtn').addEventListener('click', () => {
-      hasSignature = false;
-      cachedSigDataUrl = '';
-      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.parentElement.clientWidth, 180);
-      renderReportSheet(true);
-    });
+    sigPadList.forEach(bindSigPadEvents);
 
     function sanitizeFilename(str) { return (str || 'Unknown').trim().replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_'); }
     function buildFilename(d) {
@@ -1219,7 +1273,8 @@
         if (f.type === 'checks' || f.type === 'radio') continue;
         if (!d[f.id]) return `請填寫：${f.label.split('/')[0]}`;
       }
-      if (!hasSignature) return '請客戶簽名';
+      if (!sigPads.airlink.hasSignature) return '請簽署 Signature (Airlink)';
+      if (!sigPads.customer.hasSignature) return '請客戶簽名';
       return null;
     }
 
@@ -1516,7 +1571,9 @@
       const d = getFieldValues();
       const err = validateForm(d);
       if (err) { showToast(err, 'error'); return; }
-      if (!cachedSigDataUrl && hasSignature) refreshSignatureCache();
+      for (const pad of sigPadList) {
+        if (pad.hasSignature && !pad.cachedDataUrl) refreshSignatureCache(pad);
+      }
       saveConfig();
       const filename = buildFilename(d);
       const { subject } = buildEmailContent(d, filename);
