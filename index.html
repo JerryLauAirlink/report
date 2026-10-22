@@ -357,7 +357,7 @@
     ];
 
     const FORM_SCHEMA_SG = [
-      { id: 'jobNumber', label: 'Your PO No', type: 'text', required: true },
+      { id: 'jobNumber', label: 'Job No', type: 'text', required: true },
       { id: 'customerName', label: 'Customer', type: 'text', required: true },
       { id: 'siteAddress', label: 'Site Address', type: 'text', required: true },
       { id: 'serviceTypeChecks', label: 'Service Type', type: 'checks', items: SERVICE_TYPES_SG, extra: { id: 'serviceTypeOthers', label: 'Others (specify)', type: 'text' } },
@@ -785,7 +785,7 @@
         <div class="rpt-header">
           <img class="rpt-logo" src="airlink-logo.png" alt="AIRLINK">
           <div class="rpt-header-mid"><div class="rpt-h1">SERVICE REPORT</div></div>
-          <div class="rpt-jobno"><span class="rpt-jobno-lbl">Your PO No:</span><span class="rpt-jobno-val">${esc(d.jobNumber)}</span></div>
+          <div class="rpt-jobno"><span class="rpt-jobno-lbl">Job No:</span><span class="rpt-jobno-val">${esc(d.jobNumber)}</span></div>
         </div>
         <table class="rpt-tbl">${RPT_COLS}
           <tr><td class="rpt-lbl">Customer:</td><td colspan="3" class="rpt-val">${esc(d.customerName)}</td></tr>
@@ -1534,7 +1534,7 @@
     }
 
     function buildEmailContent(d, filename, forMailto = false) {
-      const jobLabel = activeTemplate === 'sg' ? 'PO No' : 'Job No';
+      const jobLabel = 'Job No';
       const subject = `Service Report - ${d.customerName || ''} - ${d.jobNumber || ''}`.replace(/\s+/g, ' ').trim();
       const lines = [
         'Please find attached Service Report.',
