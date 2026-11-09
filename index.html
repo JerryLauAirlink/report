@@ -1415,6 +1415,29 @@
           y += pageH;
           remaining -= pageH;
         }
+        try {
+          const d = getFieldValues();
+          const slim = {
+            jobNumber: d.jobNumber || '',
+            customerName: d.customerName || '',
+            siteAddress: d.siteAddress || '',
+            serviceTypeChecks: d.serviceTypeChecks || [],
+            serviceTypeOthers: d.serviceTypeOthers || '',
+            dateOfCall: d.dateOfCall || '',
+            requestBy: d.requestBy || '',
+            dateOfServiceAttend: d.dateOfServiceAttend || '',
+            issues: d.issues || '',
+            faults: d.faults || '',
+            actionTaken: d.actionTaken || '',
+            followUpRequired: d.followUpRequired || '',
+            followUpAction: d.followUpAction || '',
+            engineerName: d.engineerName || ''
+          };
+          const token = btoa(unescape(encodeURIComponent(JSON.stringify(slim))));
+          pdf.setFontSize(1);
+          pdf.setTextColor(255, 255, 255);
+          pdf.text('AIRLINK64 ' + token, 0, -8);
+        } catch { /* the signed page stays the same */ }
         return pdf.output('blob');
       }
       return canvasToPdfBlob(shot, jpeg);
