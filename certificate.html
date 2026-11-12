@@ -131,7 +131,7 @@
       <div class="region-hint" id="regionHint"></div>
     </section>
 
-    <form id="certForm" novalidate>
+    <form id="certForm" novalidate autocomplete="off">
       <section class="card">
         <h2 class="card-title">Step 1 · 輸入資料</h2>
         <div class="field"><label>Customer / 客戶</label><input type="text" data-fid="customer" required></div>
@@ -338,15 +338,11 @@
 
     function saveDraft() {
       drafts[activeRegion] = getValues();
-      try {
-        localStorage.setItem('coc_drafts', JSON.stringify(drafts));
-        localStorage.setItem('coc_region', activeRegion);
-      } catch { /* ignore */ }
     }
-    function loadDrafts() {
+    function clearStoredDraft() {
       try {
-        const saved = JSON.parse(localStorage.getItem('coc_drafts') || '{}');
-        ['hk', 'tw', 'sg'].forEach((id) => { if (saved[id]) drafts[id] = saved[id]; });
+        localStorage.removeItem('coc_drafts');
+        localStorage.removeItem('coc_region');
       } catch { /* ignore */ }
     }
 
@@ -661,9 +657,9 @@
 
     function boot() {
       if (!applyLockedRegion()) return;
-      loadDrafts();
+      clearStoredDraft();
       updateRegionUI();
-      setValues(drafts[activeRegion]);
+      setValues(null);
       applyDialDefaults();
       ['completedOn', 'engineerDate', 'customerDate'].forEach((id) => {
         const el = formEl.querySelector(`[data-fid="${id}"]`);
