@@ -50,6 +50,7 @@
     .region-hint strong{color:var(--text);font-weight:600}
     .back-link{display:inline-block;margin:0 0 12px;color:#93c5fd;text-decoration:none;font-size:.88rem}
     .back-link[hidden]{display:none}
+    #regionCard[hidden]{display:none!important}
     .signature-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;touch-action:none}
     .signature-wrap canvas{display:block;width:100%;height:160px}
     .signature-actions{display:flex;justify-content:flex-end;margin-top:10px}
@@ -120,7 +121,7 @@
   </header>
   <main>
     <a class="back-link" id="backLink" href="./" hidden>← 返回選擇地區或表單</a>
-    <section class="card" id="regionCard">
+    <section class="card" id="regionCard" hidden>
       <h2 class="card-title">地區 Office</h2>
       <div class="tpl-tabs" id="regionTabs">
         <button type="button" class="tpl-tab active" data-region="hk">🇭🇰 Hong Kong<br>香港</button>
