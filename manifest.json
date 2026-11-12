@@ -1,7 +1,7 @@
 {
-  "name": "Airlink Service Report",
-  "short_name": "Airlink Report",
-  "description": "Airlink 外勤 Service Report — 填表、簽名、上傳",
+  "name": "Airlink",
+  "short_name": "Airlink",
+  "description": "請先選擇地區，再填寫 Service Report 或 Cert of Job Completion",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

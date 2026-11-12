@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a2332">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="竣工證明">
+  <title>Certificate of Job Completion</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root {
+      --bg:#0f1419; --surface:#1a2332; --surface-2:#243044; --border:#2d3a4f;
+      --text:#e8edf4; --muted:#8b9cb3; --accent:#2563eb; --success:#22c55e; --danger:#ef4444;
+      --radius:10px; --footer-h:44px; --safe-bottom:env(safe-area-inset-bottom,0px);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;line-height:1.5;padding-bottom:calc(var(--footer-h) + var(--safe-bottom) + 16px)}
+    .app-header{background:linear-gradient(180deg,var(--surface),var(--bg));border-bottom:1px solid var(--border);padding:18px 16px 14px;text-align:center}
+    .app-header h1{font-size:1.1rem;font-weight:600}
+    .app-header p{font-size:.75rem;color:var(--muted);margin-top:4px}
+    main{max-width:560px;margin:0 auto;padding:16px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+    .card-title{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .field{margin-bottom:14px;min-width:0}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{display:block;font-size:.875rem;color:var(--muted);margin-bottom:6px;font-weight:400;font-family:inherit}
+    input[type=text],input[type=date],input[type=tel],textarea,select{
+      width:100%;max-width:100%;min-width:0;padding:12px 14px;background:var(--bg);border:1px solid var(--border);
+      border-radius:8px;color:var(--text);font-family:inherit;font-size:.875rem;font-weight:400;outline:none
+    }
+    input[type=date]::-webkit-datetime-edit,
+    input[type=date]::-webkit-datetime-edit-fields-wrapper,
+    input[type=date]::-webkit-datetime-edit-text,
+    input[type=date]::-webkit-datetime-edit-month-field,
+    input[type=date]::-webkit-datetime-edit-day-field,
+    input[type=date]::-webkit-datetime-edit-year-field{
+      font-family:inherit;font-size:.875rem;font-weight:400;padding:0
+    }
+    textarea{min-height:72px;resize:vertical;font-family:inherit;line-height:1.45}
+    input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+    .phone-row{display:flex;gap:8px}
+    .phone-row select{flex:0 0 118px;width:118px}
+    .tpl-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+    .tpl-tabs[hidden]{display:none!important}
+    .tpl-tab{padding:12px 6px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);font-size:.78rem;cursor:pointer;text-align:center;line-height:1.35}
+    .tpl-tab.active{border-color:var(--accent);background:rgba(37,99,235,.15);color:#fff}
+    .region-hint{font-size:.75rem;color:var(--muted);line-height:1.5;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+    .region-hint strong{color:var(--text);font-weight:600}
+    .back-link{display:inline-block;margin:0 0 12px;color:#93c5fd;text-decoration:none;font-size:.88rem}
+    .back-link[hidden]{display:none}
+    .signature-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;touch-action:none}
+    .signature-wrap canvas{display:block;width:100%;height:160px}
+    .signature-actions{display:flex;justify-content:flex-end;margin-top:10px}
+    .btn-clear{padding:8px 16px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.82rem;cursor:pointer}
+    .preview-wrap{overflow:auto;border:1px solid var(--border);border-radius:8px;background:#d8dde6;padding:8px;max-height:min(74vh,760px)}
+    .preview-viewport{overflow:hidden;margin:0 auto;background:#fff}
+    .preview-scale{transform-origin:top left;width:794px}
+    .btn-upload{display:block;width:100%;padding:16px;margin-top:8px;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
+    .btn-upload:disabled{opacity:.6}
+    .app-footer{position:fixed;bottom:0;left:0;right:0;height:calc(var(--footer-h)+var(--safe-bottom));padding-bottom:var(--safe-bottom);background:#e5e7eb;color:#6b7280;font-size:.68rem;display:flex;align-items:center;justify-content:center;z-index:100;border-top:1px solid #d1d5db}
+    .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(120%);bottom:calc(var(--footer-h) + var(--safe-bottom) + 12px);background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:14px 20px;border-radius:10px;font-size:.88rem;max-width:calc(100% - 32px);text-align:center;z-index:300;transition:transform .35s;white-space:pre-line;line-height:1.45}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .toast.success{border-color:var(--success)}
+    .toast.error{border-color:var(--danger)}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:-2px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .mobile-upload-panel{position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center;padding:0 0 calc(var(--footer-h) + var(--safe-bottom))}
+    .mobile-upload-panel[hidden]{display:none!important}
+    .mobile-upload-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+    .mobile-upload-sheet{position:relative;width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:18px 16px 20px}
+    .mobile-upload-sheet h3{margin:0 0 10px;font-size:1rem}
+    .mobile-upload-steps{margin:0 0 14px;padding-left:1.2rem;font-size:.82rem;line-height:1.55;color:var(--muted)}
+    .mobile-upload-steps b{color:var(--text)}
+    .mobile-upload-btn{display:block;width:100%;margin-top:8px;padding:14px 16px;border-radius:10px;font-size:.95rem;font-weight:600;text-align:center;text-decoration:none;cursor:pointer;border:none}
+    .mobile-upload-btn.primary{background:var(--accent);color:#fff}
+    .mobile-upload-btn.ghost{background:transparent;color:var(--muted);font-size:.82rem;font-weight:500}
+
+    .cert-page{
+      width:794px;min-height:1123px;background:#fff;color:#111;
+      font-family:"Times New Roman","PMingLiU","Microsoft JhengHei",serif;
+      font-size:13px;font-weight:400;line-height:1.35;padding:28px 52px 28px;
+      display:flex;flex-direction:column;
+      -webkit-text-size-adjust:100%;text-size-adjust:100%
+    }
+    .cert-main{flex:1 1 auto}
+    .cert-logo-wrap{text-align:left;margin:0 0 8px}
+    .cert-logo{height:32px;width:auto;display:block}
+    .cert-title{text-align:center;font-weight:700;letter-spacing:.4px;line-height:1.12;margin:2px 0 18px;color:#111;font-size:22px}
+    .cert-title .l1,.cert-title .l2{display:block;font-size:22px;font-weight:700}
+    .cert-row{display:flex;align-items:flex-end;gap:8px;margin:8px 0}
+    .cert-k,.cert-v,.cert-project,.cert-lead,.cert-legal,.cert-legal .cert-name{
+      font-family:"Times New Roman","PMingLiU","Microsoft JhengHei",serif;
+      font-size:13px;font-weight:400;font-style:normal;line-height:1.35;
+      -webkit-text-size-adjust:100%;text-size-adjust:100%
+    }
+    .cert-k{flex:0 0 auto;white-space:nowrap}
+    .cert-v{flex:1;border-bottom:1px solid #111;min-height:18px;padding:0 4px 1px;white-space:pre-wrap;word-break:break-word}
+    .cert-split{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
+    .cert-lead{margin:14px 0 2px}
+    .cert-project{border-bottom:1px solid #111;min-height:18px;margin:2px 0 8px;padding-bottom:2px}
+    .cert-legal{margin:14px 0 12px;text-align:justify}
+    .blank-name{display:inline-block;min-width:140px;border-bottom:1px solid #111}
+    .sig-slot{flex:1;border-bottom:1px solid #111;height:54px;position:relative;overflow:hidden}
+    .sig-slot img{position:absolute;left:0;bottom:0;width:100%;height:52px;object-fit:contain;object-position:left bottom}
+    .cert-foot{margin-top:auto;padding-top:18px;text-align:center;font-size:9px;font-weight:400;line-height:1.35}
+    .cert-foot strong{display:block;font-size:10px;font-weight:600}
+    .cert-foot a{color:#1d4ed8;text-decoration:none}
+    #certSheetCapture{
+      position:fixed;left:-9999px;top:0;pointer-events:none;z-index:-1;
+      opacity:1;visibility:visible;background:#fff
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Certificate of Job Completion</h1>
+    <p>竣工證明 · Hong Kong / Taiwan / Singapore</p>
+  </header>
+  <main>
+    <a class="back-link" id="backLink" href="./" hidden>← 返回選擇地區或表單</a>
+    <section class="card" id="regionCard">
+      <h2 class="card-title">地區 Office</h2>
+      <div class="tpl-tabs" id="regionTabs">
+        <button type="button" class="tpl-tab active" data-region="hk">🇭🇰 Hong Kong<br>香港</button>
+        <button type="button" class="tpl-tab" data-region="tw">🇹🇼 Taiwan<br>台灣</button>
+        <button type="button" class="tpl-tab" data-region="sg">🇸🇬 Singapore<br>新加坡</button>
+      </div>
+      <div class="region-hint" id="regionHint"></div>
+    </section>
+
+    <form id="certForm" novalidate>
+      <section class="card">
+        <h2 class="card-title">Step 1 · 輸入資料</h2>
+        <div class="field"><label>Customer / 客戶</label><input type="text" data-fid="customer" required></div>
+        <div class="field"><label>Address / 客戶地址</label><textarea data-fid="address" rows="2"></textarea></div>
+        <div class="field">
+          <label>Tel / 電話</label>
+          <div class="phone-row">
+            <select data-fid="telCode" data-dial aria-label="電話區號">
+              <option value="+852">+852</option>
+              <option value="+886">+886</option>
+              <option value="+65">+65</option>
+            </select>
+            <input type="tel" data-fid="tel" placeholder="號碼" inputmode="tel">
+          </div>
+        </div>
+        <div class="field">
+          <label>Facsimile / 傳真</label>
+          <div class="phone-row">
+            <select data-fid="faxCode" data-dial aria-label="傳真區號">
+              <option value="+852">+852</option>
+              <option value="+886">+886</option>
+              <option value="+65">+65</option>
+            </select>
+            <input type="tel" data-fid="fax" placeholder="號碼" inputmode="tel">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Job No / 項目編號</label><input type="text" data-fid="jobNo" required></div>
+          <div class="field"><label>Cust P.O. Ref / 客戶訂單</label><input type="text" data-fid="poRef"></div>
+        </div>
+        <div class="field"><label>Project Name / 項目名稱</label><input type="text" data-fid="projectName" required></div>
+        <div class="field"><label>At site / 工程地點</label><input type="text" data-fid="site" required></div>
+        <div class="field-row">
+          <div class="field"><label>Was completed on / 完工日期</label><input type="date" data-fid="completedOn" required></div>
+          <div class="field"><label>Engineer date / 工程師日期</label><input type="date" data-fid="engineerDate"></div>
+        </div>
+        <div class="field"><label>Engineer / Project Manager / 負責人</label><input type="text" data-fid="engineer" required></div>
+        <div class="field"><label>確認內文的客戶名稱（未填則使用 Customer）</label><input type="text" data-fid="ackName"></div>
+        <div class="field-row">
+          <div class="field"><label>Defects Liability 開始</label><input type="date" data-fid="dlpStart"></div>
+          <div class="field"><label>Defects Liability 結束</label><input type="date" data-fid="dlpEnd"></div>
+        </div>
+        <div class="field"><label>客戶簽署日期</label><input type="date" data-fid="customerDate"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Step 2 · 預覽（所見即 PDF）</h2>
+        <div class="preview-wrap"><div class="preview-viewport" id="previewViewport"><div class="preview-scale" id="previewScale"><div id="certSheet" class="cert-page"></div></div></div></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Step 3 · 工程師簽署</h2>
+        <div class="signature-wrap"><canvas id="engineerCanvas"></canvas></div>
+        <div class="signature-actions"><button type="button" class="btn-clear" id="clearEngineer">清除簽名</button></div>
+      </section>
+      <section class="card">
+        <h2 class="card-title">Step 4 · 客戶簽署</h2>
+        <div class="signature-wrap"><canvas id="customerCanvas"></canvas></div>
+        <div class="signature-actions"><button type="button" class="btn-clear" id="clearCustomer">清除簽名</button></div>
+      </section>
+      <button type="button" class="btn-upload" id="sendBtn">上傳 PDF</button>
+    </form>
+  </main>
+  <footer class="app-footer">Powered by Airlink Security Technologies | service@airlink-asia.com</footer>
+  <div id="toast" class="toast" role="status"></div>
+  <div id="mobileUploadPanel" class="mobile-upload-panel" hidden aria-hidden="true">
+    <div class="mobile-upload-backdrop" id="mobileUploadBackdrop"></div>
+    <div class="mobile-upload-sheet" role="dialog" aria-labelledby="mobileUploadTitle">
+      <h3 id="mobileUploadTitle">上傳 PDF</h3>
+      <ol class="mobile-upload-steps">
+        <li>點選下方 <b>「開啟 PDF」</b>，會開啟新頁面</li>
+        <li>在新頁面自行上傳至您要使用的 <b>Dropbox 位置</b></li>
+      </ol>
+      <a id="mobilePdfOpen" class="mobile-upload-btn primary" href="#" target="_blank" rel="noopener">開啟 PDF</a>
+      <button type="button" id="mobileUploadClose" class="mobile-upload-btn ghost">關閉</button>
+    </div>
+  </div>
+  <div id="certSheetCapture" class="cert-page"></div>
+
+  <script src="lib/html2canvas.min.js"></script>
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script>
+    const DIALS = ['+852', '+886', '+65'];
+    const REGIONS = {
+      hk: {
+        dial: '+852',
+        fileTag: 'Completion_HK',
+        company: 'Airlink Asia Ltd',
+        lines: ["Unit 506, 5/F, New World Tower 1, 18 Queen's Road Central, Central, Hong Kong"],
+        phone: '+852 6947 2983',
+        email: ''
+      },
+      tw: {
+        dial: '+886',
+        fileTag: 'Completion_TW',
+        company: 'Airlink Security Technologies Ltd.',
+        lines: [
+          '9F, No.219, Sec.3, Nanjing E. Rd.,',
+          'Zhongshan District, Taipei City, 104506 Taiwan, R.O.C'
+        ],
+        phone: '',
+        email: ''
+      },
+      sg: {
+        dial: '+65',
+        fileTag: 'Completion_SG',
+        company: 'Airlink Security Technologies Pte Ltd',
+        lines: ['33 Ubi Avenue 3, #07-37F Vertex, Tower A Singapore 408868'],
+        phone: '',
+        email: 'service@airlink-asia.com'
+      }
+    };
+
+    let activeRegion = 'hk';
+    const drafts = { hk: null, tw: null, sg: null };
+    const previewSheet = document.getElementById('certSheet');
+    const captureSheet = document.getElementById('certSheetCapture');
+    const formEl = document.getElementById('certForm');
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function plusTwelveMonths(iso) {
+      const [y, m, d] = String(iso || '').split('-').map(Number);
+      if (!y || !m || !d) return '';
+      const monthIndex = m - 1 + 12;
+      const lastDay = new Date(y, monthIndex + 1, 0).getDate();
+      const dt = new Date(y, monthIndex, Math.min(d, lastDay));
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+    }
+    let syncingEnd = false;
+    function syncDlpEnd() {
+      const start = formEl.querySelector('[data-fid="dlpStart"]');
+      const end = formEl.querySelector('[data-fid="dlpEnd"]');
+      if (!start || !end || !start.value || end.dataset.manual === '1') return;
+      syncingEnd = true;
+      end.value = plusTwelveMonths(start.value);
+      syncingEnd = false;
+    }
+    function rememberManualEnd() {
+      const start = formEl.querySelector('[data-fid="dlpStart"]');
+      const end = formEl.querySelector('[data-fid="dlpEnd"]');
+      if (!end) return;
+      if (end.value && (!start?.value || end.value !== plusTwelveMonths(start.value))) end.dataset.manual = '1';
+      else delete end.dataset.manual;
+    }
+
+    function todayISO() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const [y, m, d] = iso.split('-');
+      if (!y || !m || !d) return iso;
+      return activeRegion === 'tw' ? `${y}/${m}/${d}` : `${d}/${m}/${y}`;
+    }
+    function showToast(msg, type, ms) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast show ${type || ''}`;
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => t.classList.remove('show'), ms || 4500);
+    }
+    function filled(text) {
+      const v = String(text ?? '').trim();
+      return v ? esc(v).replace(/\n/g, '<br>') : '&nbsp;';
+    }
+    function phoneText(code, num) {
+      const n = String(num || '').trim();
+      return n ? `${code || ''} ${n}`.trim() : (code || '');
+    }
+
+    function getValues() {
+      const v = {};
+      formEl.querySelectorAll('[data-fid]').forEach((el) => { v[el.dataset.fid] = el.value.trim(); });
+      return v;
+    }
+    function setValues(data) {
+      formEl.querySelectorAll('[data-fid]').forEach((el) => {
+        if (data && data[el.dataset.fid] != null) el.value = data[el.dataset.fid];
+        else if (el.dataset.dial) el.value = REGIONS[activeRegion].dial;
+        else el.value = '';
+      });
+    }
+
+    function applyLockedRegion() {
+      const raw = (new URLSearchParams(location.search).get('region') || '').toLowerCase();
+      const map = { hk: 'hk', tw: 'tw', sg: 'sg', spore: 'sg', singapore: 'sg', taiwan: 'tw', hongkong: 'hk' };
+      const region = map[raw];
+      if (!region) {
+        location.replace('./');
+        return false;
+      }
+      activeRegion = region;
+      const tabs = document.getElementById('regionTabs');
+      if (tabs) tabs.hidden = true;
+      const back = document.getElementById('backLink');
+      if (back) {
+        back.hidden = false;
+        back.href = './?region=' + region;
+      }
+      const names = { hk: '香港 · 竣工證明', tw: '台灣 · 竣工證明', sg: '新加坡 · 竣工證明' };
+      const title = document.querySelector('.app-header h1');
+      if (title) title.textContent = names[region];
+      return true;
+    }
+
+    function saveDraft() {
+      drafts[activeRegion] = getValues();
+      try {
+        localStorage.setItem('coc_drafts', JSON.stringify(drafts));
+        localStorage.setItem('coc_region', activeRegion);
+      } catch { /* ignore */ }
+    }
+    function loadDrafts() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('coc_drafts') || '{}');
+        ['hk', 'tw', 'sg'].forEach((id) => { if (saved[id]) drafts[id] = saved[id]; });
+      } catch { /* ignore */ }
+    }
+
+    function updateRegionUI() {
+      document.querySelectorAll('#regionTabs .tpl-tab').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.region === activeRegion);
+      });
+      const r = REGIONS[activeRegion];
+      const extra = [r.phone ? `T: ${r.phone}` : '', r.email ? `Email: ${r.email}` : ''].filter(Boolean).join(' · ');
+      document.getElementById('regionHint').innerHTML =
+        `<strong>${esc(r.company)}</strong><br>${r.lines.map(esc).join('<br>')}${extra ? `<br>${esc(extra)}` : ''}`;
+    }
+
+    function applyDialDefaults() {
+      const dial = REGIONS[activeRegion].dial;
+      formEl.querySelectorAll('[data-dial]').forEach((el) => {
+        if (!DIALS.includes(el.value)) el.value = dial;
+      });
+    }
+
+    function switchRegion(next) {
+      if (!REGIONS[next] || next === activeRegion) return;
+      saveDraft();
+      activeRegion = next;
+      setValues(drafts[next]);
+      applyDialDefaults();
+      ['completedOn', 'engineerDate', 'customerDate'].forEach((id) => {
+        const el = formEl.querySelector(`[data-fid="${id}"]`);
+        if (el && !el.value) el.value = todayISO();
+      });
+      updateRegionUI();
+      renderSheet();
+    }
+
+    function sigHtml(src) {
+      return src ? `<img src="${src}" alt="">` : '';
+    }
+
+    function buildHTML(d, sigs) {
+      const r = REGIONS[activeRegion];
+      const who = (d.ackName || d.customer || '').trim();
+      const whoHtml = who ? `<span class="cert-name">${esc(who)}</span>` : '<span class="blank-name">&nbsp;</span>';
+      const phoneLine = r.phone ? `<br>T: ${esc(r.phone)}` : '';
+      const emailLine = r.email ? `<br>Email: <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : '';
+      const engineerSig = sigHtml(sigs.engineer);
+      const customerSig = sigHtml(sigs.customer);
+      return `
+        <div class="cert-main">
+          <div class="cert-logo-wrap"><img class="cert-logo" src="airlink-logo.png" alt="AIRLINK"></div>
+          <h1 class="cert-title"><span class="l1">CERTIFICATE OF</span><span class="l2">COMPLETION AND ACCEPTANCE</span></h1>
+          <div class="cert-row"><span class="cert-k">Customer:</span><span class="cert-v">${filled(d.customer)}</span></div>
+          <div class="cert-row"><span class="cert-k">Address:</span><span class="cert-v">${filled(d.address)}</span></div>
+          <div class="cert-split">
+            <div class="cert-row"><span class="cert-k">Tel:</span><span class="cert-v">${filled(phoneText(d.telCode, d.tel))}</span></div>
+            <div class="cert-row"><span class="cert-k">Facsimile No:</span><span class="cert-v">${filled(phoneText(d.faxCode, d.fax))}</span></div>
+          </div>
+          <div class="cert-split">
+            <div class="cert-row"><span class="cert-k">Job No:</span><span class="cert-v">${filled(d.jobNo)}</span></div>
+            <div class="cert-row"><span class="cert-k">Cust P.O Ref:</span><span class="cert-v">${filled(d.poRef)}</span></div>
+          </div>
+          <p class="cert-lead">We certify the installation of:</p>
+          <div class="cert-project">${filled(d.projectName)}</div>
+          <div class="cert-row"><span class="cert-k">At site:</span><span class="cert-v">${filled(d.site)}</span></div>
+          <div class="cert-row"><span class="cert-k">Was completed on:</span><span class="cert-v">${filled(fmtDate(d.completedOn))}</span></div>
+          <div class="cert-row"><span class="cert-k">Engineer/Project Manager in Charge:</span><span class="cert-v">${filled(d.engineer)}</span></div>
+          <div class="cert-split">
+            <div class="cert-row"><span class="cert-k">Signature:</span><span class="sig-slot" data-sig="engineer">${engineerSig}</span></div>
+            <div class="cert-row"><span class="cert-k">Date:</span><span class="cert-v">${filled(fmtDate(d.engineerDate))}</span></div>
+          </div>
+          <p class="cert-legal">By signing below, ${whoHtml} acknowledges that the system has been installed, commissioned and demonstrated to your satisfaction.</p>
+          <div class="cert-row"><span class="cert-k">Defects Liability Period Start Date:</span><span class="cert-v">${filled(fmtDate(d.dlpStart))}</span></div>
+          <div class="cert-row"><span class="cert-k">Defects Liability Period End Date:</span><span class="cert-v">${filled(fmtDate(d.dlpEnd))}</span></div>
+          <div class="cert-row" style="margin-top:16px"><span class="cert-k">Signature &amp; Stamp of Owner/Customer:</span><span class="sig-slot" data-sig="customer">${customerSig}</span></div>
+          <div class="cert-row"><span class="cert-k">Date:</span><span class="cert-v">${filled(fmtDate(d.customerDate))}</span></div>
+        </div>
+        <div class="cert-foot">
+          <strong>${esc(r.company)}</strong>
+          ${r.lines.map(esc).join('<br>')}
+          ${phoneLine}${emailLine}
+        </div>`;
+    }
+
+    function createPad(canvasId, clearId, key) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const pad = { key, canvas, ctx, drawing: false, hasSignature: false, lastX: 0, lastY: 0, cached: '' };
+      document.getElementById(clearId).addEventListener('click', () => {
+        pad.hasSignature = false;
+        pad.cached = '';
+        pad.ctx.fillStyle = '#fff';
+        pad.ctx.fillRect(0, 0, pad.canvas.parentElement.clientWidth, 160);
+        renderSheet(true);
+      });
+      return pad;
+    }
+    const pads = {
+      engineer: createPad('engineerCanvas', 'clearEngineer', 'engineer'),
+      customer: createPad('customerCanvas', 'clearCustomer', 'customer')
+    };
+
+    function resizePad(pad) {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const w = pad.canvas.parentElement.clientWidth;
+      let snap = null;
+      if (pad.hasSignature && pad.canvas.width) {
+        snap = document.createElement('canvas');
+        snap.width = pad.canvas.width;
+        snap.height = pad.canvas.height;
+        snap.getContext('2d').drawImage(pad.canvas, 0, 0);
+      }
+      pad.canvas.width = w * ratio;
+      pad.canvas.height = 160 * ratio;
+      pad.canvas.style.width = w + 'px';
+      pad.canvas.style.height = '160px';
+      pad.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      pad.ctx.lineWidth = 2.6;
+      pad.ctx.lineCap = 'round';
+      pad.ctx.lineJoin = 'round';
+      pad.ctx.strokeStyle = '#111';
+      pad.ctx.fillStyle = '#fff';
+      pad.ctx.fillRect(0, 0, w, 160);
+      if (snap) pad.ctx.drawImage(snap, 0, 0, w, 160);
+    }
+    function pos(pad, e) {
+      const t = e.touches ? e.touches[0] : e;
+      const r = pad.canvas.getBoundingClientRect();
+      return { x: t.clientX - r.left, y: t.clientY - r.top };
+    }
+    function bindPad(pad) {
+      const start = (e) => {
+        e.preventDefault();
+        pad.drawing = true;
+        pad.hasSignature = true;
+        const p = pos(pad, e);
+        pad.lastX = p.x; pad.lastY = p.y;
+        pad.ctx.fillStyle = '#111';
+        pad.ctx.beginPath();
+        pad.ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2);
+        pad.ctx.fill();
+      };
+      const move = (e) => {
+        if (!pad.drawing) return;
+        e.preventDefault();
+        const p = pos(pad, e);
+        pad.ctx.strokeStyle = '#111';
+        pad.ctx.beginPath();
+        pad.ctx.moveTo(pad.lastX, pad.lastY);
+        pad.ctx.lineTo(p.x, p.y);
+        pad.ctx.stroke();
+        pad.lastX = p.x; pad.lastY = p.y;
+      };
+      const stop = () => {
+        if (!pad.drawing) return;
+        pad.drawing = false;
+        pad.cached = pad.canvas.toDataURL('image/png');
+        renderSheet(true);
+      };
+      pad.canvas.addEventListener('mousedown', start);
+      pad.canvas.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', stop);
+      pad.canvas.addEventListener('touchstart', start, { passive: false });
+      pad.canvas.addEventListener('touchmove', move, { passive: false });
+      pad.canvas.addEventListener('touchend', stop);
+    }
+
+    function signatureMap() {
+      const out = {};
+      Object.values(pads).forEach((pad) => {
+        if (pad.hasSignature) out[pad.key] = pad.cached || pad.canvas.toDataURL('image/png');
+      });
+      return out;
+    }
+
+    let renderTimer = null;
+    let cachedH = 0;
+    function renderSheet(sigOnly) {
+      const sigs = signatureMap();
+      if (sigOnly) {
+        ['engineer', 'customer'].forEach((key) => {
+          document.querySelectorAll(`[data-sig="${key}"]`).forEach((el) => { el.innerHTML = sigHtml(sigs[key]); });
+        });
+        return;
+      }
+      const html = buildHTML(getValues(), sigs);
+      previewSheet.innerHTML = html;
+      captureSheet.innerHTML = html;
+      cachedH = 0;
+      const logo = previewSheet.querySelector('.cert-logo');
+      const after = () => { cachedH = measureHeight(); scalePreview(); };
+      if (logo && !logo.complete) logo.addEventListener('load', after, { once: true });
+      requestAnimationFrame(after);
+    }
+    function measureHeight() {
+      const viewport = document.getElementById('previewViewport');
+      const scaleEl = document.getElementById('previewScale');
+      scaleEl.style.transform = 'none';
+      viewport.style.width = '794px';
+      viewport.style.height = 'auto';
+      return Math.max(previewSheet.offsetHeight, previewSheet.scrollHeight, 1123);
+    }
+    function scalePreview() {
+      const wrap = document.querySelector('.preview-wrap');
+      const viewport = document.getElementById('previewViewport');
+      const scaleEl = document.getElementById('previewScale');
+      const sheetH = cachedH || measureHeight();
+      const scale = Math.min(1, Math.max(wrap.clientWidth - 16, 200) / 794);
+      scaleEl.style.transform = `scale(${scale})`;
+      viewport.style.width = `${Math.ceil(794 * scale)}px`;
+      viewport.style.height = `${Math.ceil(sheetH * scale)}px`;
+    }
+
+    function validate(d) {
+      const need = [
+        ['customer', 'Customer'],
+        ['jobNo', 'Job No'],
+        ['projectName', 'Project Name'],
+        ['site', 'At site'],
+        ['completedOn', '完工日期'],
+        ['engineer', '負責人']
+      ];
+      for (const [id, label] of need) {
+        if (!d[id]) return `請填寫：${label}`;
+      }
+      if (!pads.engineer.hasSignature) return '請工程師簽署';
+      if (!pads.customer.hasSignature) return '請客戶簽署';
+      return '';
+    }
+
+    function fileName(d) {
+      const date = (d.completedOn || todayISO()).replace(/-/g, '');
+      const clean = (s) => (s || 'Unknown').trim().replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_');
+      return `${date}_${clean(d.customer)}_${clean(d.jobNo)}_${REGIONS[activeRegion].fileTag}.pdf`;
+    }
+
+    async function captureShot() {
+      renderSheet();
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const prev = captureSheet.style.left;
+      captureSheet.style.left = '0';
+      try {
+        return await html2canvas(captureSheet, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          width: 794,
+          windowWidth: 794,
+          logging: false
+        });
+      } finally {
+        captureSheet.style.left = prev || '-9999px';
+      }
+    }
+
+    function pdfFromShot(shot) {
+      const jpeg = shot.toDataURL('image/jpeg', 0.92);
+      const JsPDF = window.jspdf.jsPDF;
+      const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+      const pageW = 210;
+      const pageH = 297;
+      const imgH = shot.height * pageW / shot.width;
+      let y = 0;
+      let left = imgH;
+      while (left > 0.5) {
+        if (y > 0) pdf.addPage();
+        pdf.addImage(jpeg, 'JPEG', 0, -y, pageW, imgH);
+        y += pageH;
+        left -= pageH;
+      }
+      return pdf.output('blob');
+    }
+
+    let mobileBlobUrl = null;
+    function hideMobileUpload() {
+      const panel = document.getElementById('mobileUploadPanel');
+      panel.hidden = true;
+      panel.setAttribute('aria-hidden', 'true');
+    }
+    function showMobileUpload(blob, filename) {
+      if (mobileBlobUrl) URL.revokeObjectURL(mobileBlobUrl);
+      mobileBlobUrl = URL.createObjectURL(blob);
+      const link = document.getElementById('mobilePdfOpen');
+      link.href = mobileBlobUrl;
+      link.textContent = `開啟 PDF（${filename}）`;
+      const panel = document.getElementById('mobileUploadPanel');
+      panel.hidden = false;
+      panel.setAttribute('aria-hidden', 'false');
+    }
+
+    async function sendCertificate() {
+      const d = getValues();
+      const err = validate(d);
+      if (err) { showToast(err, 'error'); return; }
+      saveDraft();
+      const name = fileName(d);
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>正在生成 PDF…';
+      try {
+        const shot = await captureShot();
+        const blob = pdfFromShot(shot);
+        showMobileUpload(blob, name);
+        showToast('請點選「開啟 PDF」，再自行上傳至對應的 Dropbox 位置', 'success', 8000);
+      } catch (e) {
+        console.error(e);
+        showToast('生成失敗：' + (e.message || '請重試'), 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '上傳 PDF';
+      }
+    }
+
+    function boot() {
+      if (!applyLockedRegion()) return;
+      loadDrafts();
+      updateRegionUI();
+      setValues(drafts[activeRegion]);
+      applyDialDefaults();
+      ['completedOn', 'engineerDate', 'customerDate'].forEach((id) => {
+        const el = formEl.querySelector(`[data-fid="${id}"]`);
+        if (el && !el.value) el.value = todayISO();
+      });
+      document.querySelectorAll('#regionTabs .tpl-tab').forEach((btn) => {
+        btn.addEventListener('click', () => switchRegion(btn.dataset.region));
+      });
+      formEl.querySelectorAll('[data-fid]').forEach((el) => {
+        const evt = () => {
+          if (el.dataset.dial) el.dataset.touched = '1';
+          if (el.dataset.fid === 'dlpEnd' && !syncingEnd) el.dataset.manual = el.value ? '1' : '';
+          if (el.dataset.fid === 'dlpStart') syncDlpEnd();
+          clearTimeout(renderTimer);
+          renderTimer = setTimeout(() => { saveDraft(); renderSheet(); }, 80);
+        };
+        el.addEventListener('input', evt);
+        el.addEventListener('change', evt);
+      });
+      rememberManualEnd();
+      Object.values(pads).forEach((pad) => { resizePad(pad); bindPad(pad); });
+      window.addEventListener('resize', () => {
+        Object.values(pads).forEach(resizePad);
+        scalePreview();
+      });
+      document.getElementById('sendBtn').addEventListener('click', sendCertificate);
+      document.getElementById('mobileUploadClose').addEventListener('click', hideMobileUpload);
+      document.getElementById('mobileUploadBackdrop').addEventListener('click', hideMobileUpload);
+      renderSheet();
+    }
+    boot();
+  </script>
+</body>
+</html>

@@ -1,6 +1,8 @@
-# Field Report PWA (TW / SG)
+# Airlink 表格（同一個網址）
 
-外勤 Service Report：填表 → 客戶簽名 → 上傳 PDF。
+入首頁先選擇地區（香港 / 台灣 / 新加坡），再選擇 Service Report 或 Cert of Job Completion，然後填寫表單並請客戶簽名。
+
+同事只需要記一個網址。
 
 ## 同事快速開始
 
