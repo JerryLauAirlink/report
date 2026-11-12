@@ -53,6 +53,7 @@
     textarea.rpt-field-lg{min-height:110px}
     .tpl-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
     .tpl-tabs[hidden]{display:none!important}
+    #templateCard[hidden]{display:none!important}
     .tpl-tab{padding:12px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);font-size:.72rem;cursor:pointer;text-align:center;line-height:1.35;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .tpl-tab,.btn-upload,.config-toggle,.btn-clear{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .tpl-tab.active{border-color:var(--accent);background:rgba(37,99,235,.15);color:#fff}
@@ -221,6 +222,17 @@
     <h1>Airlink Service Report</h1>
     <p>填寫 Service Report → 凌科簽名 → 客戶簽名 → Email 傳送</p>
   </header>
+  <script>
+    (function () {
+      var raw = (new URLSearchParams(location.search).get('region') || '').toLowerCase();
+      var map = { hk: 'hk', tw: 'tw', sg: 'sg', spore: 'sg', singapore: 'sg', taiwan: 'tw', hongkong: 'hk' };
+      var region = map[raw];
+      if (!region) return;
+      var names = { hk: '香港 · Service Report', tw: '台灣 · Service Report', sg: '新加坡 · Service Report' };
+      var title = document.querySelector('.app-header h1');
+      if (title) title.textContent = names[region];
+    })();
+  </script>
   <main>
     <a class="back-link" id="backLink" href="./" hidden>← 返回選擇地區或表單</a>
     <div id="installHint" class="install-hint">📲 加入主畫面後可一鍵開啟、隱藏網址列</div>
@@ -235,7 +247,7 @@
       <button type="button" class="btn-reset-default" id="resetConfigBtn">↩ 恢復公司預設</button>
     </div>
 
-    <section class="card">
+    <section class="card" id="templateCard" hidden>
       <h2 class="card-title">Report Form</h2>
       <div class="tpl-tabs" id="tplTabs">
         <button type="button" class="tpl-tab active" data-tpl="tw">🇹🇼 Taiwan<br>Service Report</button>
@@ -1747,6 +1759,7 @@
 
     async function boot() {
       try {
+        if (!applyLockedRegion()) return;
         await loadDeployConfig();
         config = loadConfig();
         document.getElementById('uploadBtn').addEventListener('click', sendReportViaEmail);
@@ -1756,7 +1769,6 @@
         if (window.visualViewport) {
           window.visualViewport.addEventListener('resize', onViewportChange);
         }
-        if (!applyLockedRegion()) return;
         initConfigUI();
         loadStoredDrafts();
         initTemplateTabs();
