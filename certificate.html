@@ -80,16 +80,16 @@
     .cert-page{
       width:794px;min-height:1123px;background:#fff;color:#111;
       font-family:"Times New Roman","PMingLiU","Microsoft JhengHei",serif;
-      font-size:13px;font-weight:400;line-height:1.35;padding:28px 52px 28px;
+      font-size:13px;font-weight:400;line-height:1.35;padding:40px 52px 28px;
       display:flex;flex-direction:column;
       -webkit-text-size-adjust:100%;text-size-adjust:100%
     }
     .cert-main{flex:1 1 auto}
-    .cert-logo-wrap{text-align:left;margin:0 0 8px}
+    .cert-logo-wrap{text-align:left;margin:0 0 26px}
     .cert-logo{height:32px;width:auto;display:block}
-    .cert-title{text-align:center;font-weight:700;letter-spacing:.4px;line-height:1.12;margin:2px 0 18px;color:#111;font-size:22px}
+    .cert-title{text-align:center;font-weight:700;letter-spacing:.4px;line-height:1.12;margin:0 0 36px;color:#111;font-size:22px}
     .cert-title .l1,.cert-title .l2{display:block;font-size:22px;font-weight:700}
-    .cert-row{display:flex;align-items:flex-end;gap:8px;margin:8px 0}
+    .cert-row{display:flex;align-items:flex-end;gap:8px;margin:16px 0}
     .cert-k,.cert-v,.cert-project,.cert-lead,.cert-legal,.cert-legal .cert-name{
       font-family:"Times New Roman","PMingLiU","Microsoft JhengHei",serif;
       font-size:13px;font-weight:400;font-style:normal;line-height:1.35;
@@ -98,9 +98,9 @@
     .cert-k{flex:0 0 auto;white-space:nowrap}
     .cert-v{flex:1;border-bottom:1px solid #111;min-height:18px;padding:0 4px 1px;white-space:pre-wrap;word-break:break-word}
     .cert-split{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
-    .cert-lead{margin:14px 0 2px}
+    .cert-lead{margin:26px 0 8px}
     .cert-project{border-bottom:1px solid #111;min-height:18px;margin:2px 0 8px;padding-bottom:2px}
-    .cert-legal{margin:14px 0 12px;text-align:justify}
+    .cert-legal{margin:26px 0 20px;text-align:justify}
     .blank-name{display:inline-block;min-width:140px;border-bottom:1px solid #111}
     .sig-slot{flex:1;border-bottom:1px solid #111;height:54px;position:relative;overflow:hidden}
     .sig-slot img{position:absolute;left:0;bottom:0;width:100%;height:52px;object-fit:contain;object-position:left bottom}
@@ -163,16 +163,12 @@
         </div>
         <div class="field"><label>Project Name / 項目名稱</label><input type="text" data-fid="projectName" required></div>
         <div class="field"><label>At site / 工程地點</label><input type="text" data-fid="site" required></div>
-        <div class="field-row">
-          <div class="field"><label>Was completed on / 完工日期</label><input type="date" data-fid="completedOn" required></div>
-          <div class="field"><label>Engineer date / 工程師日期</label><input type="date" data-fid="engineerDate"></div>
-        </div>
+        <div class="field"><label>Was completed on / 完工日期</label><input type="date" data-fid="completedOn" required></div>
+        <div class="field"><label>Document Prepare Date / 文件準備日期</label><input type="date" data-fid="engineerDate"></div>
         <div class="field"><label>Engineer / Project Manager / 負責人</label><input type="text" data-fid="engineer" required></div>
         <div class="field"><label>確認內文的客戶名稱（未填則使用 Customer）</label><input type="text" data-fid="ackName"></div>
-        <div class="field-row">
-          <div class="field"><label>Defects Liability 開始</label><input type="date" data-fid="dlpStart"></div>
-          <div class="field"><label>Defects Liability 結束</label><input type="date" data-fid="dlpEnd"></div>
-        </div>
+        <div class="field"><label>Defects Liability 開始</label><input type="date" data-fid="dlpStart"></div>
+        <div class="field"><label>Defects Liability 結束</label><input type="date" data-fid="dlpEnd"></div>
         <div class="field"><label>客戶簽署日期</label><input type="date" data-fid="customerDate"></div>
       </section>
 
@@ -417,12 +413,12 @@
           <div class="cert-row"><span class="cert-k">Engineer/Project Manager in Charge:</span><span class="cert-v">${filled(d.engineer)}</span></div>
           <div class="cert-split">
             <div class="cert-row"><span class="cert-k">Signature:</span><span class="sig-slot" data-sig="engineer">${engineerSig}</span></div>
-            <div class="cert-row"><span class="cert-k">Date:</span><span class="cert-v">${filled(fmtDate(d.engineerDate))}</span></div>
+            <div class="cert-row"><span class="cert-k">Document Prepare Date:</span><span class="cert-v">${filled(fmtDate(d.engineerDate))}</span></div>
           </div>
           <p class="cert-legal">By signing below, ${whoHtml} acknowledges that the system has been installed, commissioned and demonstrated to your satisfaction.</p>
           <div class="cert-row"><span class="cert-k">Defects Liability Period Start Date:</span><span class="cert-v">${filled(fmtDate(d.dlpStart))}</span></div>
           <div class="cert-row"><span class="cert-k">Defects Liability Period End Date:</span><span class="cert-v">${filled(fmtDate(d.dlpEnd))}</span></div>
-          <div class="cert-row" style="margin-top:16px"><span class="cert-k">Signature &amp; Stamp of Owner/Customer:</span><span class="sig-slot" data-sig="customer">${customerSig}</span></div>
+          <div class="cert-row" style="margin-top:36px"><span class="cert-k">Signature of Owner/Customer:</span><span class="sig-slot" data-sig="customer">${customerSig}</span></div>
           <div class="cert-row"><span class="cert-k">Date:</span><span class="cert-v">${filled(fmtDate(d.customerDate))}</span></div>
         </div>
         <div class="cert-foot">
